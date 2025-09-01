@@ -6,28 +6,30 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static(__dirname + "/public"));
+app.use(express.static(__dirname + "/"));
 
 let players = {};
 
 io.on("connection", (socket) => {
-  console.log("New player:", socket.id);
+  console.log("Player connected:", socket.id);
+
   players[socket.id] = { x: 0, y: 1.6, z: 0 };
 
-  io.emit("player-joined", socket.id);
+  socket.emit("updatePlayers", players);
+  socket.broadcast.emit("updatePlayers", players);
 
   socket.on("move", (data) => {
-    players[socket.id] = data;
-    io.emit("state-update", players);
+    if (players[socket.id]) {
+      players[socket.id] = data;
+      io.emit("updatePlayers", players);
+    }
   });
 
   socket.on("disconnect", () => {
     console.log("Player disconnected:", socket.id);
     delete players[socket.id];
-    io.emit("player-left", socket.id);
+    io.emit("updatePlayers", players);
   });
 });
 
-server.listen(3000, () => {
-  console.log("🚀 Multiplayer server running on http://localhost:3000");
-});
+server.listen(3000, () => console.log("Tiffyverse server running on :3000"));
