@@ -1,40 +1,63 @@
-<!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8">
-    <title>TiffyAI VR Portal</title>
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   </head>
-  <body>
-    <a-scene vr-mode-ui="enabled: true" embedded>
-      <!-- Assets -->
-      <a-assets>
-        <video id="leftVid" src="left.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
-        <video id="rightVid" src="right.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
-        <video id="backVid" src="back.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
-        <video id="topVid" src="top.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
-        <video id="floorVid" src="floor.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
-      </a-assets>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene>
+      <!-- Background sky -->
+      <a-sky color="#222"></a-sky>
 
       <!-- Floor -->
-      <a-plane src="#floorVid" rotation="-90 0 0" width="40" height="40" position="0 0 0"></a-plane>
+      <a-plane rotation="-90 0 0" width="50" height="50" color="#555" shadow></a-plane>
 
-      <!-- Left wall -->
-      <a-plane src="#leftVid" rotation="0 90 0" width="40" height="20" position="-20 10 0"></a-plane>
+      <!-- Lighting -->
+      <a-entity light="type: ambient; color: #666"></a-entity>
+      <a-entity light="type: directional; intensity: 0.8" position="2 4 -2"></a-entity>
 
-      <!-- Right wall -->
-      <a-plane src="#rightVid" rotation="0 -90 0" width="40" height="20" position="20 10 0"></a-plane>
+      <!-- Hero avatar -->
+      <a-box id="hero" position="0 1.5 -3" depth="1" height="2" width="1" color="blue"></a-box>
 
-      <!-- Back wall -->
-      <a-plane src="#backVid" rotation="0 180 0" width="40" height="20" position="0 10 -20"></a-plane>
-
-      <!-- Ceiling -->
-      <a-plane src="#topVid" rotation="90 0 0" width="40" height="40" position="0 20 0"></a-plane>
-
-      <!-- Camera -->
-      <a-entity position="0 2 10">
-        <a-camera wasd-controls-enabled="true" look-controls="true"></a-camera>
+      <!-- Camera with controls -->
+      <a-entity id="rig" position="0 1.6 0">
+        <a-camera></a-camera>
       </a-entity>
     </a-scene>
+
+    <!-- Buttons (always visible, not hidden in VR corner) -->
+    <div id="ui" style="
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+    ">
+      <button onclick="shootMagic()" style="padding:10px 20px;">🔥 Shoot Magic</button>
+      <button onclick="spawnEnemy()" style="padding:10px 20px;">👾 Spawn Enemy</button>
+    </div>
+
+    <script>
+      function shootMagic() {
+        let scene = document.querySelector('a-scene');
+        let magic = document.createElement('a-sphere');
+        magic.setAttribute('radius', '0.1');
+        magic.setAttribute('color', 'cyan');
+        magic.setAttribute('position', '0 1.6 0');
+        magic.setAttribute('animation', 'property: position; to: 0 1.6 -10; dur: 1000; easing: linear');
+        scene.appendChild(magic);
+        setTimeout(() => magic.remove(), 1500);
+      }
+
+      function spawnEnemy() {
+        let scene = document.querySelector('a-scene');
+        let enemy = document.createElement('a-box');
+        enemy.setAttribute('color', 'red');
+        enemy.setAttribute('depth', '1');
+        enemy.setAttribute('height', '2');
+        enemy.setAttribute('width', '1');
+        enemy.setAttribute('position', `${(Math.random()*6-3).toFixed(1)} 1.5 -6`);
+        scene.appendChild(enemy);
+      }
+    </script>
   </body>
 </html>
