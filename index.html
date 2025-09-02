@@ -3,32 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <title>Immersive Video Room</title>
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
   </head>
   <body>
-    <a-scene>
-      <!-- Assets -->
+    <a-scene background="color: black" vr-mode-ui="enabled: true">
+      <!-- VIDEO ASSETS -->
       <a-assets>
-        <video id="frontVideo" src="front.mp4" autoplay loop muted playsinline></video>
-        <video id="backVideo" src="back.mp4" autoplay loop muted playsinline></video>
-        <video id="leftVideo" src="left.mp4" autoplay loop muted playsinline></video>
-        <video id="rightVideo" src="right.mp4" autoplay loop muted playsinline></video>
+        <video id="front" autoplay loop playsinline crossorigin="anonymous" src="front.mp4"></video>
+        <video id="back" autoplay loop playsinline crossorigin="anonymous" src="back.mp4"></video>
+        <video id="left" autoplay loop playsinline crossorigin="anonymous" src="left.mp4"></video>
+        <video id="right" autoplay loop playsinline crossorigin="anonymous" src="right.mp4"></video>
+        <video id="top" autoplay loop playsinline crossorigin="anonymous" src="top.mp4"></video>
+        <video id="bottom" autoplay loop playsinline crossorigin="anonymous" src="bottom.mp4"></video>
       </a-assets>
 
-      <!-- Front Wall -->
-      <a-video src="#frontVideo" position="0 0 -5" rotation="0 0 0" width="10" height="6"></a-video>
+      <!-- BIGGER, STRETCHED ROOM -->
+      <a-box id="room"
+        position="0 0 0"
+        depth="50"
+        height="25"
+        width="50"
+        material="side: back; shader: flat; src: #front">
+      </a-box>
 
-      <!-- Back Wall -->
-      <a-video src="#backVideo" position="0 0 5" rotation="0 180 0" width="14" height="6"></a-video>
+      <!-- FRONT -->
+      <a-plane src="#front" rotation="0 0 0" width="50" height="25" position="0 0 -25"></a-plane>
+      <!-- BACK -->
+      <a-plane src="#back" rotation="0 180 0" width="60" height="25" position="0 0 25"></a-plane>
+      <!-- LEFT -->
+      <a-plane src="#left" rotation="0 90 0" width="50" height="25" position="-25 0 0"></a-plane>
+      <!-- RIGHT -->
+      <a-plane src="#right" rotation="0 -90 0" width="50" height="25" position="25 0 0"></a-plane>
+      <!-- TOP -->
+      <a-plane src="#top" rotation="-90 0 0" width="50" height="50" position="0 12.5 0"></a-plane>
+      <!-- BOTTOM -->
+      <a-plane src="#bottom" rotation="90 0 0" width="50" height="50" position="0 -12.5 0"></a-plane>
 
-      <!-- Left Wall -->
-      <a-video src="#leftVideo" position="-7 0 0" rotation="0 90 0" width="14" height="6"></a-video>
-
-      <!-- Right Wall -->
-      <a-video src="#rightVideo" position="7 0 0" rotation="0 -90 0" width="14" height="6"></a-video>
-
-      <!-- Camera -->
-      <a-entity camera look-controls wasd-controls position="0 1.6 0"></a-entity>
+      <!-- CAMERA -->
+      <a-entity camera look-controls position="0 0 0"></a-entity>
     </a-scene>
   </body>
 </html>
