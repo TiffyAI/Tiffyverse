@@ -112,7 +112,7 @@ function playSound(id, vol=1.0){
     }catch(e){}
 }
 
-/* ---------- Spawning enemies (CORRECTED AGAIN) ---------- */
+/* ---------- Spawning enemies (FINAL FIX) ---------- */
 function spawnEnemy() {
     const cube = document.createElement('a-box');
     cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
@@ -130,13 +130,15 @@ function spawnEnemy() {
     const randY = (Math.random() - 0.5) * 2 * verticalRange;
     const localPos = new THREE.Vector3(randX, randY, -spawnDistance);
 
-    // Get the player's current rotation and position
-    const playerRotation = camera.object3D.rotation;
-    const playerPosition = camera.object3D.getWorldPosition(new THREE.Vector3());
+    // Get the player's world quaternion (rotation) and position
+    const playerWorldQuaternion = new THREE.Quaternion();
+    camera.object3D.getWorldQuaternion(playerWorldQuaternion);
+    const playerWorldPosition = new THREE.Vector3();
+    camera.object3D.getWorldPosition(playerWorldPosition);
 
     // Rotate the local position and add the player's position to get the final world position
-    localPos.applyEuler(playerRotation);
-    const worldPos = playerPosition.clone().add(localPos);
+    localPos.applyQuaternion(playerWorldQuaternion);
+    const worldPos = playerWorldPosition.clone().add(localPos);
     
     cube.object3D.position.copy(worldPos);
     scene.appendChild(cube);
