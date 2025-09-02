@@ -2,109 +2,194 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tiffyverse Portal</title>
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://cdn.rawgit.com/donmccurdy/aframe-physics-system/v4.0.1/dist/aframe-physics-system.min.js"></script>
+  <title>TiffyAI AR Shooter</title>
   <style>
-    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:#000; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+
+    /* Background Videos */
+    video.bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      opacity: 0.85;
+    }
+
+    /* Enemies */
+    .enemy {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Orbs (player shots) */
+    .orb {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Explosion animation */
+    @keyframes explode {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.6); opacity: 0.8; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+    .explosion {
+      animation: explode 0.6s ease-out forwards;
+    }
+
+    /* Glass HUD overlay (TiffyAI style) */
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 10px 20px;
+      color: #00f0ff;
+      font-family: monospace;
+      font-size: 18px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 20px rgba(0,255,255,0.4);
+    }
   </style>
 </head>
 <body>
-  <a-scene physics="gravity: 0 -9.8 0">
+  <!-- Background videos -->
+  <video id="front" class="bg" autoplay muted loop src="front.mp4"></video>
+  <video id="back" class="bg" autoplay muted loop src="back.mp4"></video>
+  <video id="left" class="bg" autoplay muted loop src="left.mp4"></video>
+  <video id="right" class="bg" autoplay muted loop src="right.mp4"></video>
 
-    <!-- Player camera -->
-    <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
-
-    <!-- Assets: 6 MP4 videos -->
-    <a-assets>
-      <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous">
-        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4" type="video/mp4">
-      </video>
-      <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous">
-        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4" type="video/mp4">
-      </video>
-      <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous">
-        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4" type="video/mp4">
-      </video>
-      <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous">
-        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4" type="video/mp4">
-      </video>
-      <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous">
-        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4" type="video/mp4">
-      </video>
-      <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous">
-        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4" type="video/mp4">
-      </video>
-
-      <!-- Enemy video -->
-      <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous">
-        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemy.mp4" type="video/mp4">
-      </video>
-    </a-assets>
-
-    <!-- Cube planes -->
-    <a-plane src="#frontVideo" position="0 1.6 -50" rotation="0 0 0" width="100" height="100"></a-plane>
-    <a-plane src="#backVideo" position="0 1.6 50" rotation="0 180 0" width="100" height="100"></a-plane>
-    <a-plane src="#leftVideo" position="-50 1.6 0" rotation="0 90 0" width="100" height="100"></a-plane>
-    <a-plane src="#rightVideo" position="50 1.6 0" rotation="0 -90 0" width="100" height="100"></a-plane>
-    <a-plane src="#topVideo" position="0 101.6 0" rotation="90 0 0" width="150" height="150"></a-plane>
-    <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
-
-    <!-- Enemy target -->
-    <a-plane id="enemy" src="#enemyVideo" position="0 2 -10" width="3" height="3" material="transparent:true" static-body></a-plane>
-
-  </a-scene>
+  <!-- HUD -->
+  <div id="hud">👾 Tap to shoot magic orbs!</div>
 
   <script>
-    // Make all MP4s play on load
-    window.addEventListener('load', () => {
-      ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo','enemyVideo'].forEach(id => {
-        const vid = document.getElementById(id);
-        vid.muted = true;
-        vid.play().catch(err => console.warn(`Autoplay blocked for ${id}:`, err));
-      });
-    });
+    const enemies = [];
+    const orbs = [];
 
-    // Shooter component
-    AFRAME.registerComponent("shooter", {
-      init: function () {
-        window.addEventListener("click", () => {
-          const camera = document.querySelector("#player");
-          const cameraObj = camera.object3D;
+    // Spawn enemies from random side
+    function spawnEnemy() {
+      const enemy = document.createElement("video");
+      enemy.src = "enemies.mp4";
+      enemy.autoplay = true;
+      enemy.loop = true;
+      enemy.muted = true;
+      enemy.className = "enemy";
 
-          // Direction & position
-          const direction = new THREE.Vector3();
-          cameraObj.getWorldDirection(direction);
+      // random start X across screen width
+      let startX = Math.random() * window.innerWidth;
+      let startY = -100; // spawn from top
 
-          const position = new THREE.Vector3();
-          cameraObj.getWorldPosition(position);
+      enemy.style.left = `${startX}px`;
+      enemy.style.top = `${startY}px`;
 
-          // Projectile
-          const projectile = document.createElement("a-sphere");
-          projectile.setAttribute("position", position);
-          projectile.setAttribute("radius", "0.1");
-          projectile.setAttribute("color", "cyan");
-          projectile.setAttribute("dynamic-body", "mass:0.1");
+      document.body.appendChild(enemy);
 
-          // Velocity
-          const velocity = direction.multiplyScalar(-15); // forward shot
-          projectile.addEventListener("body-loaded", () => {
-            projectile.body.velocity.set(velocity.x, velocity.y, velocity.z);
-          });
+      enemies.push({ el: enemy, x: startX, y: startY, speed: 2 + Math.random()*2 });
+    }
 
-          // Remove projectile after 5s
-          setTimeout(() => {
-            if (projectile.parentNode) {
-              projectile.parentNode.removeChild(projectile);
-            }
-          }, 5000);
+    // Shoot orb from center bottom (Tiffy's arm)
+    function shootOrb() {
+      const orb = document.createElement("video");
+      orb.src = "orb.mp4";
+      orb.autoplay = true;
+      orb.loop = true;
+      orb.muted = true;
+      orb.className = "orb";
 
-          this.el.sceneEl.appendChild(projectile);
-        });
-      },
-    });
+      let startX = window.innerWidth / 2;
+      let startY = window.innerHeight - 150;
 
-    document.querySelector("#player").setAttribute("shooter", "");
+      orb.style.left = `${startX}px`;
+      orb.style.top = `${startY}px`;
+
+      document.body.appendChild(orb);
+
+      orbs.push({ el: orb, x: startX, y: startY, speed: 8 });
+    }
+
+    // Collision detection helper
+    function isColliding(a, b) {
+      const aRect = a.getBoundingClientRect();
+      const bRect = b.getBoundingClientRect();
+      return !(
+        aRect.top > bRect.bottom ||
+        aRect.bottom < bRect.top ||
+        aRect.left > bRect.right ||
+        aRect.right < bRect.left
+      );
+    }
+
+    // Game loop
+    function gameLoop() {
+      // Move enemies down
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        let e = enemies[i];
+        e.y += e.speed;
+        e.el.style.top = `${e.y}px`;
+
+        if (e.y > window.innerHeight + 100) {
+          e.el.remove();
+          enemies.splice(i, 1);
+        }
+      }
+
+      // Move orbs up
+      for (let j = orbs.length - 1; j >= 0; j--) {
+        let o = orbs[j];
+        o.y -= o.speed;
+        o.el.style.top = `${o.y}px`;
+
+        if (o.y < -100) {
+          o.el.remove();
+          orbs.splice(j, 1);
+        }
+      }
+
+      // Check collisions
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        for (let j = orbs.length - 1; j >= 0; j--) {
+          if (isColliding(enemies[i].el, orbs[j].el)) {
+            // explosion
+            enemies[i].el.classList.add("explosion");
+            setTimeout(() => enemies[i].el.remove(), 600);
+
+            orbs[j].el.remove();
+
+            enemies.splice(i, 1);
+            orbs.splice(j, 1);
+            break;
+          }
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Shoot on tap
+    window.addEventListener("click", shootOrb);
+
+    // Spawn enemy every 2s
+    setInterval(spawnEnemy, 2000);
+
+    // Start loop
+    gameLoop();
   </script>
 </body>
 </html>
