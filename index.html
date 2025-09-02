@@ -19,7 +19,6 @@
             border-radius: 10px;
             border: 1px solid rgba(0,255,255,0.12);
             z-index: 9999;
-            font-size: 14px;
             backdrop-filter: blur(6px);
         }
         a-scene { width:100vw; height:100vh; }
@@ -64,7 +63,8 @@
         <a-entity id="cursor" cursor="fuse: false; rayOrigin: mouse"
                   position="0 0 -1" 
                   geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03" 
-                  material="color: #fff; shader: flat"
+                  material="color: #00ffff; shader: flat"
+                  animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; loop: true; dur: 400"
                   raycaster="objects: .enemy; far: 1000"></a-entity>
     </a-entity>
     
@@ -72,6 +72,24 @@
 </a-scene>
 
 <script>
+/* ---------- Custom A-Frame Component for Visual Shot Movement ---------- */
+AFRAME.registerComponent('visual-shot', {
+    schema: {
+        direction: {type: 'vec3'},
+        speed: {type: 'number', default: 200},
+    },
+    tick: function(time, timeDelta) {
+        const moveVector = this.data.direction.clone().multiplyScalar(this.data.speed * timeDelta / 1000);
+        this.el.object3D.position.add(moveVector);
+        
+        // Remove the visual shot if it gets too far away
+        const cameraPos = document.getElementById('player').object3D.position;
+        if (this.el.object3D.position.distanceTo(cameraPos) > 1500) {
+            this.el.parentNode.removeChild(this.el);
+        }
+    }
+});
+
 /* ---------- Game Globals ---------- */
 const scene = document.querySelector('a-scene');
 const camera = document.getElementById('player');
@@ -212,6 +230,34 @@ function explodeAt(position){
     playSound('explodeSound', 0.9);
 }
 
+// Function to create and launch the visual-only shot
+function createVisualShot() {
+    const start = camera.object3D.getWorldPosition(new THREE.Vector3());
+    const forward = new THREE.Vector3();
+    camera.object3D.getWorldDirection(forward);
+    
+    const visualShot = document.createElement('a-entity');
+    visualShot.setAttribute('geometry', 'primitive: sphere; radius: 0.4');
+    visualShot.setAttribute('material', 'shader: standard; emissive: #00ffff; emissiveIntensity: 2; metalness:0.05; roughness:0.2; transparent: true; opacity: 0.6');
+    visualShot.setAttribute('visual-shot', 'direction', forward);
+
+    // Give it a magical particle trail
+    const trail = document.createElement('a-entity');
+    trail.setAttribute('particle-system', {
+        preset: 'dust',
+        particleCount: 200, 
+        color: '#00ffff,#88ffcc,#ffffff',
+        size: 0.15,
+        velocityValue: '0 0 0',
+        spread: '0.22 0.22 0.22',
+        duration: 0.6,
+        blending: 2,
+    });
+    visualShot.appendChild(trail);
+    effectsParent.appendChild(visualShot);
+}
+
+
 /* ---------- Main loop ---------- */
 function tick(now){
     const dt = now - lastTime;
@@ -246,30 +292,16 @@ function tick(now){
 }
 
 /* ---------- Raycaster click listener ---------- */
-// This will now handle all shooting logic
 cursor.addEventListener('click', (e) => {
-    // The event detail contains the intersection information
+    // Play the firing sound and create the visual shot effect
+    playSound('shootSound', 0.9);
+    createVisualShot();
+
+    // Check if we hit an enemy, and if so, execute the game logic
     const intersection = e.detail.intersection;
-    
-    // Check if the intersection object is one of our enemies
     if (intersection && intersection.object && intersection.object.el && intersection.object.el.classList.contains('enemy')) {
         const enemyEl = intersection.object.el;
         const enemyPos = enemyEl.object3D.position;
-
-        // Visual "shot" effect
-        const hitEffect = document.createElement('a-entity');
-        hitEffect.setAttribute('position', `${intersection.point.x} ${intersection.point.y} ${intersection.point.z}`);
-        hitEffect.setAttribute('particle-system', {
-            preset: 'star',
-            particleCount: 20,
-            color: '#00ffff,#ffffff',
-            size: 0.2,
-            velocityValue: '0 0 0',
-            spread: '0.1 0.1 0.1',
-            duration: 0.2
-        });
-        effectsParent.appendChild(hitEffect);
-        setTimeout(()=>{ if(hitEffect.parentNode) hitEffect.parentNode.removeChild(hitEffect); }, 500);
 
         // Explosion and score logic
         explodeAt(enemyPos.clone());
@@ -280,7 +312,6 @@ cursor.addEventListener('click', (e) => {
             window.globalEnemies.splice(index, 1);
         }
         addScore(0.002);
-        playSound('shootSound', 0.9);
     }
 });
 
