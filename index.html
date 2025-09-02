@@ -194,7 +194,96 @@ function spawnEnemy() {
   // swooch sound
   playSound('swoochSound', 0.45);
 }
+// === Projectiles ===
+function createProjectile() {
+  const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+  const material = new THREE.MeshStandardMaterial({
+    emissive: new THREE.Color(0xffffff),
+    emissiveIntensity: 2,
+    transparent: true,
+    opacity: 0.9
+  });
+  const projectile = new THREE.Mesh(geometry, material);
 
+  // rainbow color shift
+  projectile.userData.hue = Math.random();
+
+  projectile.position.copy(camera.position);
+  scene.add(projectile);
+  projectiles.push(projectile);
+
+  // trail
+  const trail = new THREE.TrailRenderer(scene, false);
+  const trailMaterial = TrailRenderer.createBaseMaterial();
+  trailMaterial.uniforms.headColor.value.set(0xffffff);
+  trailMaterial.uniforms.tailColor.value.set(0x0000ff);
+  trail.setMaterial(trailMaterial, true);
+  trail.initialize(camera, projectile);
+  projectile.userData.trail = trail;
+
+  return projectile;
+}
+
+function updateProjectiles(delta) {
+  for (let i = projectiles.length - 1; i >= 0; i--) {
+    const p = projectiles[i];
+    p.position.add(p.getWorldDirection(new THREE.Vector3()).multiplyScalar(1 * delta));
+
+    // rainbow effect
+    p.userData.hue += 0.01;
+    const color = new THREE.Color().setHSL(p.userData.hue % 1, 1, 0.5);
+    p.material.emissive.set(color);
+
+    if (p.userData.trail) {
+      p.userData.trail.advance();
+    }
+  }
+}
+
+// === Enemy explosion ===
+function explodeEnemy(enemy) {
+  const pieces = [];
+  const enemyPos = enemy.position.clone();
+
+  for (let i = 0; i < 6; i++) {
+    const geom = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+    const mat = new THREE.MeshStandardMaterial({
+      color: enemy.material.color,
+      emissive: new THREE.Color(0xff0000),
+      emissiveIntensity: 1
+    });
+    const piece = new THREE.Mesh(geom, mat);
+
+    piece.position.copy(enemyPos);
+    piece.velocity = new THREE.Vector3(
+      (Math.random() - 0.5) * 2,
+      (Math.random() - 0.5) * 2,
+      (Math.random() - 0.5) * 2
+    );
+
+    scene.add(piece);
+    pieces.push(piece);
+  }
+
+  // animate & fade
+  let life = 1.0;
+  const animateExplosion = () => {
+    life -= 0.02;
+    pieces.forEach(piece => {
+      piece.position.add(piece.velocity.clone().multiplyScalar(0.1));
+      piece.material.opacity = life;
+      piece.material.transparent = true;
+    });
+    if (life > 0) {
+      requestAnimationFrame(animateExplosion);
+    } else {
+      pieces.forEach(piece => scene.remove(piece));
+    }
+  };
+  animateExplosion();
+
+  scene.remove(enemy);
+}
 /* ---------- Shooting: glowing spheres with trailing particle system ---------- */
 function shootProjectile(){
   const sphere = document.createElement('a-sphere');
