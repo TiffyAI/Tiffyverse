@@ -123,18 +123,16 @@ function spawnEnemy() {
     cube.setAttribute('depth', 3);
     cube.setAttribute('class', 'enemy');
 
-    // Pick a random side from back, left, right, top, bottom
     const side = Math.floor(Math.random() * 5);
     const dist = 50 + Math.random() * 50;
     const yPos = 1.6 + Math.random() * 50 - 25;
     let pos = new THREE.Vector3();
 
-    // `side === 0` is now the back wall, `front` is no longer a spawn location
-    if (side === 0) {
+    if (side === 0) { // Back
         pos.set(Math.random() * 100 - 50, yPos, dist);
-    } else if (side === 1) {
+    } else if (side === 1) { // Left
         pos.set(-dist, yPos, Math.random() * 100 - 50);
-    } else if (side === 2) {
+    } else if (side === 2) { // Right
         pos.set(dist, yPos, Math.random() * 100 - 50);
     } else if (side === 3) { // Top
         pos.set(Math.random() * 100 - 50, dist, Math.random() * 100 - 50);
@@ -144,7 +142,9 @@ function spawnEnemy() {
 
     cube.object3D.position.copy(pos);
     scene.appendChild(cube);
-    window.globalEnemies.push({el: cube, speed: 0.15 + Math.random() * 0.15 });
+    // Add a random rotation speed
+    const rotSpeed = (Math.random() - 0.5) * 0.05;
+    window.globalEnemies.push({el: cube, speed: 0.15 + Math.random() * 0.15, rotSpeed: rotSpeed});
     playSound('swoochSound', 0.45);
 }
 
@@ -195,12 +195,22 @@ function gameLoop(){
     }
 
     window.globalEnemies.forEach((e, i)=>{
-        // This makes the enemies rotate to face the camera
-        e.el.object3D.lookAt(camera.object3D.position);
+        // Rotate the cubes like blocks flying
+        e.el.object3D.rotation.x += e.rotSpeed * 0.8;
+        e.el.object3D.rotation.y += e.rotSpeed;
+
+        // Move forward
         const dir = new THREE.Vector3().subVectors(camera.object3D.position, e.el.object3D.position).normalize();
         e.el.object3D.position.add(dir.multiplyScalar(e.speed));
 
-        if(e.el.object3D.position.distanceTo(camera.object3D.position) < 1.2){
+        // Make the cube bigger as it gets closer
+        const distance = e.el.object3D.position.distanceTo(camera.object3D.position);
+        const maxDistance = 150; 
+        const scaleFactor = 1.0 + (1 - (distance / maxDistance)) * 1.5;
+        e.el.object3D.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        // Enemy hit the player
+        if(distance < 1.2){
             explodeAt(e.el.object3D.position.clone());
             if(e.el.parentNode) e.el.parentNode.removeChild(e.el);
             window.globalEnemies.splice(i,1);
