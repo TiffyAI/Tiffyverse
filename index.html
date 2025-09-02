@@ -21,7 +21,8 @@
 <a-scene vr-mode-ui="enabled: true">
 
     <a-assets>
-    <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4"></video>
+        <video id="background360" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/360-bg.mp4"></video>
+
     <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
 
         <audio id="shootSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
@@ -30,9 +31,9 @@
     <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
   </a-assets>
 
-    <a-plane src="#leftVideo" position="0 1.6 -100" rotation="0 0 0" width="200" height="200"></a-plane>
+    <a-sky src="#background360"></a-sky>
 
-    <a-entity id="player" camera look-controls wasd-controls position="0 1.6 -25"></a-entity>
+    <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
 
     <a-entity id="cursor" cursor="fuse: false; rayOrigin: mouse"
             position="0 0 -1"
@@ -72,7 +73,7 @@ const scoreEl = document.getElementById('score');
 window.globalEnemies = [];
 
 window.addEventListener('load', () => {
-    ['leftVideo', 'enemyVideo'].forEach(id=>{
+    ['background360', 'enemyVideo'].forEach(id=>{
         const vid = document.getElementById(id);
         if (vid) { vid.muted = true; vid.play().catch(()=>{}); }
     });
@@ -113,12 +114,12 @@ function spawnEnemy() {
     cube.setAttribute('depth', 3);
     cube.setAttribute('class', 'enemy');
 
-    // Spawn at a random position within a range
     const dist = 50 + Math.random() * 50;
-    const xPos = (Math.random() * 80) - 40;
-    const yPos = 1.6 + (Math.random() * 80) - 40;
-    
-    const pos = new THREE.Vector3(xPos, yPos, -dist);
+    const xPos = (Math.random() * dist * 2) - dist;
+    const yPos = (Math.random() * dist * 2) - dist;
+    const zPos = -dist;
+
+    const pos = new THREE.Vector3(xPos, yPos, zPos);
     
     cube.object3D.position.copy(pos);
     scene.appendChild(cube);
@@ -130,7 +131,6 @@ function spawnEnemy() {
 
 /* ---------- Explosion effect with flying pieces ---------- */
 function explodeAt(position){
-    // Create particle burst effect
     const burst = document.createElement('a-entity');
     burst.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
     burst.setAttribute('particle-system', {
@@ -140,8 +140,7 @@ function explodeAt(position){
     effectsParent.appendChild(burst);
     setTimeout(()=>{ if(burst.parentNode) burst.parentNode.removeChild(burst); }, 1000);
 
-    // Create a bunch of small, flying cube pieces
-    const numPieces = 12 + Math.random() * 8; // 12-20 pieces
+    const numPieces = 12 + Math.random() * 8;
     for(let i = 0; i < numPieces; i++){
         const piece = document.createElement('a-box');
         piece.setAttribute('width','0.3'); piece.setAttribute('height','0.3'); piece.setAttribute('depth','0.3');
@@ -149,21 +148,18 @@ function explodeAt(position){
         piece.object3D.position.copy(position);
         effectsParent.appendChild(piece);
 
-        // Give each piece a random direction, speed, and rotation
         const randDir = new THREE.Vector3((Math.random()*2-1),(Math.random()*1.4),(Math.random()*2-1)).normalize();
         const travel = 1.2 + Math.random()*1.8;
         const rotSpeed = (Math.random()*2 - 1) * 0.25;
         const duration = 600 + Math.random()*500;
         const start = performance.now();
 
-        // Animate the piece over time with a simple loop
         const animatePiece = (t)=>{
             const dt = (t - start) / duration;
             if(dt >= 1){
                 if(piece.parentNode) piece.parentNode.removeChild(piece);
                 return;
             }
-            // Move and rotate
             piece.object3D.position.copy(position).add(randDir.clone().multiplyScalar(travel * dt));
             piece.object3D.rotation.x += rotSpeed;
             piece.object3D.rotation.y += rotSpeed;
