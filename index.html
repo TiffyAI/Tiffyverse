@@ -29,7 +29,7 @@
 <a-scene vr-mode-ui="enabled: true">
 
     <a-assets>
-                <video id="background360" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/right.mp4"></video>
+        <video id="background360" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/right.mp4"></video>
         <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
 
         <audio id="shootSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
@@ -112,7 +112,7 @@ function playSound(id, vol=1.0){
     }catch(e){}
 }
 
-/* ---------- Spawning enemies ---------- */
+/* ---------- Spawning enemies (UPDATED) ---------- */
 function spawnEnemy() {
     const cube = document.createElement('a-box');
     cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
@@ -121,15 +121,25 @@ function spawnEnemy() {
     cube.setAttribute('depth', 3);
     cube.setAttribute('class', 'enemy');
 
-    // Spawn on a random point on a sphere around the player
-    const spawnRadius = 80;
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos((Math.random() * 2) - 1);
-    const x = spawnRadius * Math.sin(phi) * Math.cos(theta);
-    const y = spawnRadius * Math.sin(phi) * Math.sin(theta);
-    const z = spawnRadius * Math.cos(phi);
-    
-    const pos = new THREE.Vector3(x, y, z).add(camera.object3D.position);
+    // Get the camera's current position and forward direction
+    const cameraPosition = camera.object3D.getWorldPosition(new THREE.Vector3());
+    const cameraForward = camera.object3D.getWorldDirection(new THREE.Vector3());
+    const cameraUp = camera.object3D.up;
+    const cameraRight = new THREE.Vector3().crossVectors(cameraForward, cameraUp);
+
+    // Define spawning area relative to the camera
+    const dist = 80;
+    const horizontalRange = 50; 
+    const verticalRange = 30;
+
+    const randX = (Math.random() - 0.5) * 2 * horizontalRange;
+    const randY = (Math.random() - 0.5) * 2 * verticalRange;
+
+    // Calculate the new position
+    const pos = cameraPosition.clone()
+        .add(cameraForward.clone().multiplyScalar(-dist))
+        .add(cameraRight.clone().multiplyScalar(randX))
+        .add(cameraUp.clone().multiplyScalar(randY));
     
     cube.object3D.position.copy(pos);
     scene.appendChild(cube);
