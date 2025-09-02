@@ -11,48 +11,38 @@
 <body>
   <a-scene>
     <!-- Player camera -->
-    <a-entity id="player" camera look-controls wasd-controls></a-entity>
+    <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
 
-    <!-- Ground -->
-    <a-plane src="assets/bottom.jpg" rotation="-90 0 0" width="100" height="100"></a-plane>
+    <!-- Ground plane for physics/interaction -->
+    <a-plane src="#bottomImg" rotation="-90 0 0" width="100" height="100"></a-plane>
 
-    <!-- Skybox -->
-    <a-sky id="skybox"></a-sky>
+    <!-- Skybox using 6 planes -->
+    <a-entity id="skybox">
+      <a-plane src="#frontVideo" position="0 0 -50" rotation="0 0 0" width="100" height="100"></a-plane>
+      <a-plane src="#backVideo" position="0 0 50" rotation="0 180 0" width="100" height="100"></a-plane>
+      <a-plane src="#leftImg" position="-50 0 0" rotation="0 90 0" width="100" height="100"></a-plane>
+      <a-plane src="#rightImg" position="50 0 0" rotation="0 -90 0" width="100" height="100"></a-plane>
+      <a-plane src="#topVideo" position="0 50 0" rotation="-90 0 0" width="100" height="100"></a-plane>
+      <a-plane src="#bottomImg" position="0 -50 0" rotation="90 0 0" width="100" height="100"></a-plane>
+    </a-entity>
 
     <a-assets>
-      <video id="topVideo" autoplay loop="true" crossorigin="anonymous" playsinline>
-        <source src="assets/top.mp4" type="video/mp4">
-      </video>
-      <video id="frontVideo" autoplay loop="true" crossorigin="anonymous" playsinline>
+      <!-- Videos -->
+      <video id="frontVideo" autoplay loop playsinline muted>
         <source src="assets/front.mp4" type="video/mp4">
       </video>
-      <video id="backVideo" autoplay loop="true" crossorigin="anonymous" playsinline>
+      <video id="backVideo" autoplay loop playsinline muted>
         <source src="assets/back.mp4" type="video/mp4">
       </video>
+      <video id="topVideo" autoplay loop playsinline muted>
+        <source src="assets/top.mp4" type="video/mp4">
+      </video>
+
+      <!-- Images -->
       <img id="leftImg" src="assets/left.jpg">
       <img id="rightImg" src="assets/right.jpg">
+      <img id="bottomImg" src="assets/bottom.jpg">
     </a-assets>
-
-    <script>
-      const sky = document.querySelector('#skybox');
-
-      // Combine videos and images into a cube map
-      const loader = new THREE.CubeTextureLoader();
-      const cubeMat = loader.load([
-        document.querySelector('#rightImg').src,          // px
-        document.querySelector('#leftImg').src,           // nx
-        document.querySelector('#topVideo').currentSrc,   // py
-        document.querySelector('#topVideo').currentSrc,   // ny (reuse top)
-        document.querySelector('#frontVideo').currentSrc, // pz
-        document.querySelector('#backVideo').currentSrc   // nz
-      ]);
-
-      // Apply cube map to skybox
-      sky.object3D.material = new THREE.MeshBasicMaterial({
-        envMap: cubeMat,
-        side: THREE.BackSide
-      });
-    </script>
   </a-scene>
 </body>
 </html>
