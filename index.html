@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>Tiffyverse</title>
+    <title>TiffyAI — Playground (blocks + magic)</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
@@ -61,23 +61,21 @@
     <a-plane src="#bottomVideo" position="0 -1000 0" rotation="90 0 0" width="2000" height="2000"></a-plane>
 
     <a-entity id="player" camera look-controls position="0 1.6 0">
-        <a-entity cursor="fuse: false; rayOrigin: mouse"
+        <a-entity id="cursor" cursor="fuse: false; rayOrigin: mouse"
                   position="0 0 -1" 
                   geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03" 
                   material="color: #fff; shader: flat"
-                  raycaster="objects: .enemy"></a-entity>
+                  raycaster="objects: .enemy; far: 1000"></a-entity>
     </a-entity>
     
     <a-entity id="effects-parent"></a-entity>
 </a-scene>
 
 <script>
-// The projectile-mover component is no longer needed with the raycaster system
-// AFRAME.registerComponent('projectile-mover', { ... });
-
 /* ---------- Game Globals ---------- */
 const scene = document.querySelector('a-scene');
 const camera = document.getElementById('player');
+const cursor = document.getElementById('cursor');
 const effectsParent = document.getElementById('effects-parent');
 const scoreBox = document.getElementById('scoreBox');
 
@@ -247,12 +245,13 @@ function tick(now){
     requestAnimationFrame(tick);
 }
 
-/* ---------- Input (shoot on tap/click) ---------- */
-// This event will now handle all shooting logic
-window.addEventListener('click', (e)=>{
-    // The raycaster from the cursor fires an 'fusing' event on the intersected object
-    // We can also check for a mouse click on the scene
-    const intersection = camera.components.raycaster.intersection;
+/* ---------- Raycaster click listener ---------- */
+// This will now handle all shooting logic
+cursor.addEventListener('click', (e) => {
+    // The event detail contains the intersection information
+    const intersection = e.detail.intersection;
+    
+    // Check if the intersection object is one of our enemies
     if (intersection && intersection.object && intersection.object.el && intersection.object.el.classList.contains('enemy')) {
         const enemyEl = intersection.object.el;
         const enemyPos = enemyEl.object3D.position;
@@ -288,7 +287,6 @@ window.addEventListener('click', (e)=>{
 /* ---------- start loop ---------- */
 lastTime = performance.now();
 requestAnimationFrame(tick);
-
 </script>
 </body>
 </html>
