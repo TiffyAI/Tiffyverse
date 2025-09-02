@@ -1,63 +1,110 @@
-<html>
-  <head>
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  </head>
-  <body style="margin: 0; overflow: hidden;">
-    <a-scene>
-      <!-- Background sky -->
-      <a-sky color="#222"></a-sky>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tiffyverse Portal</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.rawgit.com/donmccurdy/aframe-physics-system/v4.0.1/dist/aframe-physics-system.min.js"></script>
+  <style>
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:#000; }
+  </style>
+</head>
+<body>
+  <a-scene physics="gravity: 0 -9.8 0">
 
-      <!-- Floor -->
-      <a-plane rotation="-90 0 0" width="50" height="50" color="#555" shadow></a-plane>
+    <!-- Player camera -->
+    <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
 
-      <!-- Lighting -->
-      <a-entity light="type: ambient; color: #666"></a-entity>
-      <a-entity light="type: directional; intensity: 0.8" position="2 4 -2"></a-entity>
+    <!-- Assets: 6 MP4 videos -->
+    <a-assets>
+      <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4" type="video/mp4">
+      </video>
+      <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4" type="video/mp4">
+      </video>
+      <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4" type="video/mp4">
+      </video>
+      <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4" type="video/mp4">
+      </video>
+      <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4" type="video/mp4">
+      </video>
+      <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4" type="video/mp4">
+      </video>
 
-      <!-- Hero avatar -->
-      <a-box id="hero" position="0 1.5 -3" depth="1" height="2" width="1" color="blue"></a-box>
+      <!-- Enemy video -->
+      <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemy.mp4" type="video/mp4">
+      </video>
+    </a-assets>
 
-      <!-- Camera with controls -->
-      <a-entity id="rig" position="0 1.6 0">
-        <a-camera></a-camera>
-      </a-entity>
-    </a-scene>
+    <!-- Cube planes -->
+    <a-plane src="#frontVideo" position="0 1.6 -50" rotation="0 0 0" width="100" height="100"></a-plane>
+    <a-plane src="#backVideo" position="0 1.6 50" rotation="0 180 0" width="100" height="100"></a-plane>
+    <a-plane src="#leftVideo" position="-50 1.6 0" rotation="0 90 0" width="100" height="100"></a-plane>
+    <a-plane src="#rightVideo" position="50 1.6 0" rotation="0 -90 0" width="100" height="100"></a-plane>
+    <a-plane src="#topVideo" position="0 101.6 0" rotation="90 0 0" width="150" height="150"></a-plane>
+    <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
 
-    <!-- Buttons (always visible, not hidden in VR corner) -->
-    <div id="ui" style="
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 15px;
-    ">
-      <button onclick="shootMagic()" style="padding:10px 20px;">🔥 Shoot Magic</button>
-      <button onclick="spawnEnemy()" style="padding:10px 20px;">👾 Spawn Enemy</button>
-    </div>
+    <!-- Enemy target -->
+    <a-plane id="enemy" src="#enemyVideo" position="0 2 -10" width="3" height="3" material="transparent:true" static-body></a-plane>
 
-    <script>
-      function shootMagic() {
-        let scene = document.querySelector('a-scene');
-        let magic = document.createElement('a-sphere');
-        magic.setAttribute('radius', '0.1');
-        magic.setAttribute('color', 'cyan');
-        magic.setAttribute('position', '0 1.6 0');
-        magic.setAttribute('animation', 'property: position; to: 0 1.6 -10; dur: 1000; easing: linear');
-        scene.appendChild(magic);
-        setTimeout(() => magic.remove(), 1500);
-      }
+  </a-scene>
 
-      function spawnEnemy() {
-        let scene = document.querySelector('a-scene');
-        let enemy = document.createElement('a-box');
-        enemy.setAttribute('color', 'red');
-        enemy.setAttribute('depth', '1');
-        enemy.setAttribute('height', '2');
-        enemy.setAttribute('width', '1');
-        enemy.setAttribute('position', `${(Math.random()*6-3).toFixed(1)} 1.5 -6`);
-        scene.appendChild(enemy);
-      }
-    </script>
-  </body>
+  <script>
+    // Make all MP4s play on load
+    window.addEventListener('load', () => {
+      ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo','enemyVideo'].forEach(id => {
+        const vid = document.getElementById(id);
+        vid.muted = true;
+        vid.play().catch(err => console.warn(`Autoplay blocked for ${id}:`, err));
+      });
+    });
+
+    // Shooter component
+    AFRAME.registerComponent("shooter", {
+      init: function () {
+        window.addEventListener("click", () => {
+          const camera = document.querySelector("#player");
+          const cameraObj = camera.object3D;
+
+          // Direction & position
+          const direction = new THREE.Vector3();
+          cameraObj.getWorldDirection(direction);
+
+          const position = new THREE.Vector3();
+          cameraObj.getWorldPosition(position);
+
+          // Projectile
+          const projectile = document.createElement("a-sphere");
+          projectile.setAttribute("position", position);
+          projectile.setAttribute("radius", "0.1");
+          projectile.setAttribute("color", "cyan");
+          projectile.setAttribute("dynamic-body", "mass:0.1");
+
+          // Velocity
+          const velocity = direction.multiplyScalar(-15); // forward shot
+          projectile.addEventListener("body-loaded", () => {
+            projectile.body.velocity.set(velocity.x, velocity.y, velocity.z);
+          });
+
+          // Remove projectile after 5s
+          setTimeout(() => {
+            if (projectile.parentNode) {
+              projectile.parentNode.removeChild(projectile);
+            }
+          }, 5000);
+
+          this.el.sceneEl.appendChild(projectile);
+        });
+      },
+    });
+
+    document.querySelector("#player").setAttribute("shooter", "");
+  </script>
+</body>
 </html>
