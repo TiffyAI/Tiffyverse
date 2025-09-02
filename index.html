@@ -1,236 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>TiffyAI AR Shooter</title>
-<script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
-<style>
-  body, html { margin:0; padding:0; height:100%; overflow:hidden; background:black; font-family: monospace; }
-  #score {
-    position:absolute; top:10px; left:50%; transform:translateX(-50%);
-    color:#00f0ff; font-size:20px; font-family: monospace;
-    z-index:9999; background: rgba(0,0,0,0.2); padding:8px 15px; border-radius:10px;
-    backdrop-filter: blur(6px);
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Tiffyverse Portal</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <style>
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:#000; }
+  </style>
 </head>
 <body>
-<div id="score">TIFFY Earnings: 0.000000</div>
+  <a-scene>
 
-<a-scene vr-mode-ui="enabled: true">
+    <!-- Player camera -->
+    <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
 
-    <a-assets>
-    <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4"></video>
-    <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4"></video>
-    <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4"></video>
-    <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4"></video>
-    <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4"></video>
-    <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4"></video>
-    <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
+    <!-- Assets: 6 MP4 videos -->
+    <a-assets>
+      <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4" type="video/mp4">
+      </video>
+      <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4" type="video/mp4">
+      </video>
+      <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4" type="video/mp4">
+      </video>
+      <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4" type="video/mp4">
+      </video>
+      <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4" type="video/mp4">
+      </video>
+      <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4" type="video/mp4">
+      </video>
+    </a-assets>
 
-        <audio id="shootSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
-    <audio id="explodeSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/blocks.wav"></audio>
-    <audio id="swoochSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
-    <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
-  </a-assets>
+    <!-- Cube planes -->
+    <!-- Front -->
+    <a-plane src="#frontVideo" position="0 1.6 -50" rotation="0 0 0" width="100" height="100"></a-plane>
+    <!-- Back -->
+    <a-plane src="#backVideo" position="0 1.6 50" rotation="0 180 0" width="100" height="100"></a-plane>
+    <!-- Left -->
+    <a-plane src="#leftVideo" position="-50 1.6 0" rotation="0 90 0" width="100" height="100"></a-plane>
+    <!-- Right -->
+    <a-plane src="#rightVideo" position="50 1.6 0" rotation="0 -90 0" width="100" height="100"></a-plane>
+    <!-- Top (fixed) -->
+    <a-plane src="#topVideo" position="0 101.6 0" rotation="90 0 0" width="150" height="150"></a-plane>
+    <!-- Bottom -->
+    <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
 
-    <a-plane src="#frontVideo" position="0 1.6 -100" rotation="0 0 0" width="200" height="200"></a-plane>
-  <a-plane src="#backVideo" position="0 1.6 100" rotation="0 180 0" width="200" height="200"></a-plane>
-  <a-plane src="#leftVideo" position="-100 1.6 0" rotation="0 90 0" width="200" height="200"></a-plane>
-  <a-plane src="#rightVideo" position="100 1.6 0" rotation="0 -90 0" width="200" height="200"></a-plane>
-  <a-plane src="#topVideo" position="0 101.6 0" rotation="90 0 0" width="200" height="200"></a-plane>
-  <a-plane src="#bottomVideo" position="0 -98.4 0" rotation="-90 0 0" width="200" height="200"></a-plane>
+  </a-scene>
 
-    <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
-
-    <a-entity id="cursor" cursor="fuse: false; rayOrigin: mouse"
-            position="0 0 -1"
-            geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
-            material="color: #00ffff; shader: flat"
-            animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; loop: true; dur: 400"
-            raycaster="objects: .enemy; far: 200"></a-entity>
-
-    <a-entity id="effects-parent"></a-entity>
-
-</a-scene>
-
-<script>
-/* ---------- Custom A-Frame Component for Visual Shot Movement ---------- */
-AFRAME.registerComponent('visual-shot', {
-    schema: {
-        direction: {type: 'vec3'},
-        speed: {type: 'number', default: 150},
-    },
-    tick: function(time, timeDelta) {
-        const moveVector = this.data.direction.clone().multiplyScalar(this.data.speed * timeDelta / 1000);
-        this.el.object3D.position.add(moveVector);
-        const cameraPos = document.getElementById('player').object3D.position;
-        if (this.el.object3D.position.distanceTo(cameraPos) > 200) {
-            this.el.parentNode.removeChild(this.el);
-        }
-    }
-});
-
-
-/* ---------- Game Globals ---------- */
-const scene = document.querySelector('a-scene');
-const camera = document.getElementById('player');
-const cursor = document.getElementById('cursor');
-const effectsParent = document.getElementById('effects-parent');
-const scoreEl = document.getElementById('score');
-window.globalEnemies = [];
-
-window.addEventListener('load', () => {
-    ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo','enemyVideo'].forEach(id=>{
-        const vid = document.getElementById(id);
-        if (vid) { vid.muted = true; vid.play().catch(()=>{}); }
-    });
-    const bg = document.getElementById('bgMusic');
-    if (bg) { bg.volume = 0.25; bg.loop = true; bg.play().catch(()=>{}); }
-});
-
-/* ---------- Game state and score ---------- */
-let spawnTimer = 0;
-const spawnInterval = 1200;
-let lastTime = performance.now();
-let score = parseFloat(localStorage.getItem('tetrusScore') || '0');
-scoreEl.textContent = `TIFFY Earnings: ${score.toFixed(6)}`;
-
-function addScore(value){
-    score += value;
-    score = Math.round(score * 1e6) / 1e6;
-    localStorage.setItem('tetrusScore', score.toString());
-    scoreEl.textContent = `TIFFY Earnings: ${score.toFixed(6)}`;
-}
-
-function playSound(id, vol=1.0){
-    const src = document.getElementById(id);
-    if(!src) return;
-    try{
-        const node = src.cloneNode();
-        node.volume = vol;
-        node.play().catch(()=>{});
-    }catch(e){}
-}
-
-/* ---------- Spawning enemies ---------- */
-function spawnEnemy() {
-    const cube = document.createElement('a-box');
-    cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
-    cube.setAttribute('width', 3);
-    cube.setAttribute('height', 3);
-    cube.setAttribute('depth', 3);
-    cube.setAttribute('class', 'enemy');
-
-    const side = Math.floor(Math.random() * 4); // 0=front, 1=back, 2=left, 3=right
-    const dist = 50 + Math.random() * 50;
-    const yPos = 1.6 + Math.random() * 5 - 2.5;
-    let pos = new THREE.Vector3();
-
-    if (side === 0) {
-        pos.set(Math.random() * 20 - 10, yPos, -dist);
-    } else if (side === 1) {
-        pos.set(Math.random() * 20 - 10, yPos, dist);
-    } else if (side === 2) {
-        pos.set(-dist, yPos, Math.random() * 20 - 10);
-    } else {
-        pos.set(dist, yPos, Math.random() * 20 - 10);
-    }
-
-    cube.object3D.position.copy(pos);
-    scene.appendChild(cube);
-    window.globalEnemies.push({el: cube, speed: 0.15 + Math.random() * 0.15 });
-    playSound('swoochSound', 0.45);
-}
-
-/* ---------- Explosion effect ---------- */
-function explodeAt(position){
-    const burst = document.createElement('a-entity');
-    burst.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
-    burst.setAttribute('particle-system', {
-        preset: 'snow', particleCount: 400, color: '#ffdd99,#ffffff,#ff9933', size: 0.07,
-        velocityValue: '1.2 1.6 1.2', spread: '1.5 1.5 1.5', duration: 0.85, blending: 2,
-    });
-    effectsParent.appendChild(burst);
-    setTimeout(()=>{ if(burst.parentNode) burst.parentNode.removeChild(burst); }, 1000);
-    playSound('explodeSound', 0.9);
-}
-
-// Function to create and launch the visual-only shot
-function createVisualShot() {
-    const start = camera.object3D.getWorldPosition(new THREE.Vector3());
-    const forward = new THREE.Vector3();
-    camera.object3D.getWorldDirection(forward);
-
-    const visualShot = document.createElement('a-entity');
-    visualShot.setAttribute('geometry', 'primitive: sphere; radius: 0.4');
-    visualShot.setAttribute('material', 'shader: standard; emissive: #00ffff; emissiveIntensity: 2; metalness:0.05; roughness:0.2; transparent: true; opacity: 0.6');
-    visualShot.setAttribute('visual-shot', 'direction', forward);
-    visualShot.object3D.position.copy(start);
-
-    const trail = document.createElement('a-entity');
-    trail.setAttribute('particle-system', {
-        preset: 'dust', particleCount: 200, color: '#00ffff,#88ffcc,#ffffff', size: 0.15,
-        velocityValue: '0 0 0', spread: '0.22 0.22 0.22', duration: 0.6, blending: 2,
-    });
-    visualShot.appendChild(trail);
-    effectsParent.appendChild(visualShot);
-}
-
-/* ---------- Main game loop ---------- */
-function gameLoop(){
-    const now = performance.now();
-    const dt = now - lastTime;
-    lastTime = now;
-
-    spawnTimer += dt;
-    if(spawnTimer > spawnInterval){
-        spawnTimer = 0;
-        spawnEnemy();
-    }
-
-    window.globalEnemies.forEach((e, i)=>{
-        e.el.object3D.lookAt(camera.object3D.position);
-        const dir = new THREE.Vector3().subVectors(camera.object3D.position, e.el.object3D.position).normalize();
-        e.el.object3D.position.add(dir.multiplyScalar(e.speed));
-
-        // If enemy gets too close, it explodes (player loses a life or scores)
-        if(e.el.object3D.position.distanceTo(camera.object3D.position) < 1.2){
-            explodeAt(e.el.object3D.position.clone());
-            if(e.el.parentNode) e.el.parentNode.removeChild(e.el);
-            window.globalEnemies.splice(i,1);
-        }
-    });
-    requestAnimationFrame(gameLoop);
-}
-
-/* ---------- SHOOTING LOGIC ---------- */
-cursor.addEventListener('click', (e) => {
-    // This part runs on EVERY click/tap
-    playSound('shootSound', 0.9);
-    createVisualShot();
-
-    // This part only runs if the raycaster hits an enemy
-    const intersection = e.detail.intersection;
-    if (intersection && intersection.object && intersection.object.el && intersection.object.el.classList.contains('enemy')) {
-        const enemyEl = intersection.object.el;
-        const enemyPos = enemyEl.object3D.position;
-        explodeAt(enemyPos.clone());
-        if (enemyEl.parentNode) enemyEl.parentNode.removeChild(enemyEl);
-
-        const index = window.globalEnemies.findIndex(item => item.el === enemyEl);
-        if (index > -1) {
-            window.globalEnemies.splice(index, 1);
-        }
-        addScore(0.002);
-    }
-});
-
-/* ---------- Start the game ---------- */
-lastTime = performance.now();
-requestAnimationFrame(gameLoop);
-
-</script>
+  <script>
+    // Ensure all videos play on mobile
+    window.addEventListener('load', () => {
+      ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo'].forEach(id => {
+        const vid = document.getElementById(id);
+        vid.muted = true;
+        vid.play().catch(err => console.warn(`Autoplay blocked for ${id}:`, err));
+      });
+    });
+  </script>
 </body>
 </html>
