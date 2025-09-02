@@ -1,61 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <title>Tiffyverse 360</title>
+    <meta charset="utf-8" />
+    <title>Tiffyverse VR Room</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   </head>
   <body>
-    <a-scene vr-mode-ui="enabled: true" background="color: black">
+    <a-scene background="color: black" vr-mode-ui="enabled: true" embedded>
+      
+      <!-- VIDEO ASSETS -->
+      <video id="frontVideo" src="front.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
+      <video id="backVideo" src="back.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
+      <video id="leftVideo" src="left.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
+      <video id="rightVideo" src="right.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
+      <video id="topVideo" src="top.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
+      <video id="bottomVideo" src="bottom.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
+      
+      <!-- FRONT -->
+      <a-plane src="#frontVideo" position="0 0 -5" rotation="0 0 0" width="10" height="6"></a-plane>
+      
+      <!-- BACK (slightly further, wider) -->
+      <a-plane src="#backVideo" position="0 0 5" rotation="0 180 0" width="14" height="8"></a-plane>
+      
+      <!-- LEFT (angled inward) -->
+      <a-plane src="#leftVideo" position="-7 0 0" rotation="0 90 5" width="14" height="8"></a-plane>
+      
+      <!-- RIGHT (angled inward) -->
+      <a-plane src="#rightVideo" position="7 0 0" rotation="0 -90 -5" width="14" height="8"></a-plane>
+      
+      <!-- TOP -->
+      <a-plane src="#topVideo" position="0 4 0" rotation="-90 0 0" width="14" height="14"></a-plane>
+      
+      <!-- BOTTOM -->
+      <a-plane src="#bottomVideo" position="0 -4 0" rotation="90 0 0" width="14" height="14"></a-plane>
+      
       <!-- Camera -->
-      <a-entity camera look-controls position="0 1.6 0"></a-entity>
-
-      <!-- Assets -->
-      <a-assets>
-        <video id="frontVideo" autoplay loop="true" muted playsinline webkit-playsinline src="front.mp4"></video>
-        <video id="backVideo" autoplay loop="true" muted playsinline webkit-playsinline src="back.mp4"></video>
-        <video id="leftVideo" autoplay loop="true" muted playsinline webkit-playsinline src="left.mp4"></video>
-        <video id="rightVideo" autoplay loop="true" muted playsinline webkit-playsinline src="right.mp4"></video>
-      </a-assets>
-
-      <!-- Front flat plane -->
-      <a-plane src="#frontVideo" position="0 2 -5" rotation="0 0 0" width="10" height="6"></a-plane>
-
-      <!-- Back curved wall -->
-      <a-cylinder 
-        src="#backVideo" 
-        radius="12" 
-        theta-length="120" 
-        theta-start="120"
-        height="6" 
-        position="0 2 0" 
-        rotation="0 180 0"
-        side="back">
-      </a-cylinder>
-
-      <!-- Left curved wall -->
-      <a-cylinder 
-        src="#leftVideo" 
-        radius="12" 
-        theta-length="120" 
-        theta-start="210"
-        height="6" 
-        position="0 2 0" 
-        rotation="0 90 0"
-        side="back">
-      </a-cylinder>
-
-      <!-- Right curved wall -->
-      <a-cylinder 
-        src="#rightVideo" 
-        radius="12" 
-        theta-length="120" 
-        theta-start="30"
-        height="6" 
-        position="0 2 0" 
-        rotation="0 -90 0"
-        side="back">
-      </a-cylinder>
+      <a-entity camera position="0 0 0" look-controls wasd-controls></a-entity>
     </a-scene>
   </body>
 </html>
