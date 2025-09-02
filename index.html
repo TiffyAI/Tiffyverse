@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>TiffyAI AR Game</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  </head>
+  <body style="margin:0; overflow:hidden;">
+    <a-scene
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: true"
+      renderer="antialias: true; colorManagement: true;"
+    >
+      <!-- 🎵 Audio -->
+      <a-assets>
+        <audio id="bg-music" src="bg.mp3" preload="auto"></audio>
+        <audio id="fire-sound" src="fire.mp3" preload="auto"></audio>
+        <audio id="swoosh-sound" src="swoosh.mp3" preload="auto"></audio>
+        <audio id="explode-sound" src="explode.mp3" preload="auto"></audio>
+      </a-assets>
+
+      <!-- 🔥 Background Video Planes -->
+      <a-assets>
+        <video id="bgvid" autoplay loop="true" src="bg.mp4"></video>
+        <video id="enemyvid" autoplay loop="true" src="enemy.mp4"></video>
+      </a-assets>
+
+      <a-plane src="#bgvid" position="0 0 -10" width="30" height="20"></a-plane>
+      <a-plane src="#bgvid" position="0 0 10" rotation="0 180 0" width="30" height="20"></a-plane>
+      <a-plane src="#bgvid" position="-15 0 0" rotation="0 90 0" width="20" height="20"></a-plane>
+      <a-plane src="#bgvid" position="15 0 0" rotation="0 -90 0" width="20" height="20"></a-plane>
+
+      <!-- 👁 Camera -->
+      <a-entity id="camera" camera look-controls position="0 1.6 0"></a-entity>
+
+      <!-- 💰 Score -->
+      <a-text
+        id="score"
+        value="Score: 0 TIFFY"
+        color="yellow"
+        position="-1 2 -3"
+        width="5"
+      ></a-text>
+
+      <a-entity id="enemy-container"></a-entity>
+    </a-scene>
+
+    <script>
+      let score = 0;
+      const scoreEl = document.getElementById("score");
+      const camera = document.getElementById("camera");
+      const scene = document.querySelector("a-scene");
+      const enemyContainer = document.getElementById("enemy-container");
+
+      // 🎵 Play background music
+      document.getElementById("bg-music").play();
+
+      // 🌀 Shooting function
+      function shoot() {
+        const fireSound = document.getElementById("fire-sound");
+        fireSound.play();
+
+        const sphere = document.createElement("a-sphere");
+        sphere.setAttribute("radius", "0.1");
+        sphere.setAttribute("color", "#00ffff");
+        sphere.setAttribute("emissive", "#00ffff");
+        sphere.setAttribute("emissiveIntensity", "2");
+        sphere.setAttribute("position", camera.object3D.position);
+        sphere.setAttribute("velocity", "0 0 -1");
+
+        // Trail effect
+        const trail = document.createElement("a-cylinder");
+        trail.setAttribute("radius", "0.02");
+        trail.setAttribute("height", "0.5");
+        trail.setAttribute("color", "#00ffff");
+        trail.setAttribute("position", "0 -0.25 0");
+        sphere.appendChild(trail);
+
+        scene.appendChild(sphere);
+
+        // Move sphere forward
+        let interval = setInterval(() => {
+          let pos = sphere.getAttribute("position");
+          sphere.setAttribute("position", {
+            x: pos.x,
+            y: pos.y,
+            z: pos.z - 0.3,
+          });
+
+          // Collision check
+          const enemies = enemyContainer.querySelectorAll(".enemy");
+          enemies.forEach((enemy) => {
+            const ePos = enemy.getAttribute("position");
+            if (
+              Math.abs(pos.x - ePos.x) < 1 &&
+              Math.abs(pos.y - ePos.y) < 1 &&
+              Math.abs(pos.z - ePos.z) < 1
+            ) {
+              explode(ePos);
+              enemy.remove();
+              sphere.remove();
+              clearInterval(interval);
+              score += 0.002;
+              scoreEl.setAttribute("value", "Score: " + score.toFixed(3) + " TIFFY");
+            }
+          });
+
+          if (pos.z < -30) {
+            sphere.remove();
+            clearInterval(interval);
+          }
+        }, 30);
+      }
+
+      // 💥 Explosion function
+      function explode(position) {
+        const explodeSound = document.getElementById("explode-sound");
+        explodeSound.play();
+
+        for (let i = 0; i < 10; i++) {
+          const particle = document.createElement("a-sphere");
+          particle.setAttribute("radius", "0.05");
+          particle.setAttribute("color", "#ff0000");
+          particle.setAttribute("position", position);
+          scene.appendChild(particle);
+
+          let dir = {
+            x: (Math.random() - 0.5) * 2,
+            y: (Math.random() - 0.5) * 2,
+            z: (Math.random() - 0.5) * 2,
+          };
+
+          let steps = 0;
+          let interval = setInterval(() => {
+            let pos = particle.getAttribute("position");
+            particle.setAttribute("position", {
+              x: pos.x + dir.x * 0.1,
+              y: pos.y + dir.y * 0.1,
+              z: pos.z + dir.z * 0.1,
+            });
+            steps++;
+            if (steps > 20) {
+              particle.remove();
+              clearInterval(interval);
+            }
+          }, 50);
+        }
+      }
+
+      // 👾 Enemy spawner
+      function spawnEnemy() {
+        const enemy = document.createElement("a-box");
+        enemy.setAttribute("depth", "1");
+        enemy.setAttribute("height", "1");
+        enemy.setAttribute("width", "1");
+        enemy.setAttribute("src", "#enemyvid");
+        enemy.classList.add("enemy");
+
+        // Spawn from random side (not front)
+        const side = Math.floor(Math.random() * 3);
+        let x = 0,
+          y = 1.6,
+          z = -20;
+        if (side === 0) {
+          x = -10;
+        } else if (side === 1) {
+          x = 10;
+        } else {
+          z = -20;
+        }
+        enemy.setAttribute("position", { x, y, z });
+        enemyContainer.appendChild(enemy);
+
+        // Move enemy forward
+        let interval = setInterval(() => {
+          let pos = enemy.getAttribute("position");
+          if (!pos) return;
+          enemy.setAttribute("position", {
+            x: pos.x * 0.95,
+            y: pos.y,
+            z: pos.z + 0.1,
+          });
+
+          if (pos.z > 5) {
+            enemy.remove();
+            clearInterval(interval);
+          }
+        }, 100);
+      }
+
+      setInterval(spawnEnemy, 3000);
+
+      // 🔫 Shoot on tap
+      window.addEventListener("click", shoot);
+    </script>
+  </body>
+</html>
