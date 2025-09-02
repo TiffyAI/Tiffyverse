@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TiffyAI AR Shooter</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+
+    /* Background videos */
+    video.bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      opacity: 0.85;
+    }
+
+    /* Enemies */
+    .enemy {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Orbs (player shots) */
+    .orb {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Fire trail */
+    .trail {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle, rgba(0,200,255,0.8) 0%, rgba(0,200,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 4;
+      animation: trailFade 0.3s linear forwards;
+    }
+
+    @keyframes trailFade {
+      0% { opacity: 0.8; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.5); }
+    }
+
+    /* Explosion animation */
+    @keyframes explode {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.6); opacity: 0.8; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+    .explosion {
+      animation: explode 0.6s ease-out forwards;
+    }
+
+    /* Glass HUD overlay (TiffyAI style) */
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 10px 20px;
+      color: #00f0ff;
+      font-family: monospace;
+      font-size: 18px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 20px rgba(0,255,255,0.4);
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <!-- Background videos -->
+  <video id="front" class="bg" autoplay muted loop src="front.mp4"></video>
+  <video id="back" class="bg" autoplay muted loop src="back.mp4"></video>
+  <video id="left" class="bg" autoplay muted loop src="left.mp4"></video>
+  <video id="right" class="bg" autoplay muted loop src="right.mp4"></video>
+  <video id="top" class="bg" autoplay muted loop src="top.mp4"></video>
+  <video id="bottom" class="bg" autoplay muted loop src="bottom.mp4"></video>
+
+  <!-- HUD -->
+  <div id="hud">👾 Tap anywhere to shoot magic orbs!</div>
+
+  <script>
+    const enemies = [];
+    const orbs = [];
+
+    // Spawn enemies from random side
+    function spawnEnemy() {
+      const enemy = document.createElement("video");
+      enemy.src = "enemies.mp4";
+      enemy.autoplay = true;
+      enemy.loop = true;
+      enemy.muted = true;
+      enemy.className = "enemy";
+
+      // Start from back/left/right randomly
+      const sides = ['back', 'left', 'right'];
+      const side = sides[Math.floor(Math.random() * sides.length)];
+      let startX, startY;
+
+      if(side === 'back') {
+        startX = Math.random() * window.innerWidth;
+        startY = -150;
+      } else if(side === 'left') {
+        startX = -150;
+        startY = Math.random() * window.innerHeight;
+      } else {
+        startX = window.innerWidth + 150;
+        startY = Math.random() * window.innerHeight;
+      }
+
+      enemy.style.left = `${startX}px`;
+      enemy.style.top = `${startY}px`;
+
+      document.body.appendChild(enemy);
+
+      enemies.push({ el: enemy, x: startX, y: startY, side: side, speed: 2 + Math.random()*2 });
+    }
+
+    // Shoot orb from center bottom
+    function shootOrb() {
+      const orb = document.createElement("video");
+      orb.src = "orb.mp4";
+      orb.autoplay = true;
+      orb.loop = true;
+      orb.muted = true;
+      orb.className = "orb";
+
+      let startX = window.innerWidth / 2;
+      let startY = window.innerHeight - 150;
+
+      orb.style.left = `${startX}px`;
+      orb.style.top = `${startY}px`;
+
+      document.body.appendChild(orb);
+
+      orbs.push({ el: orb, x: startX, y: startY, speed: 12 });
+    }
+
+    // Fire trail for orb
+    function createTrail(x, y) {
+      const trail = document.createElement("div");
+      trail.className = "trail";
+      trail.style.left = `${x}px`;
+      trail.style.top = `${y}px`;
+      document.body.appendChild(trail);
+      setTimeout(() => trail.remove(), 300);
+    }
+
+    // Collision detection
+    function isColliding(a, b) {
+      const aRect = a.getBoundingClientRect();
+      const bRect = b.getBoundingClientRect();
+      return !(
+        aRect.top > bRect.bottom ||
+        aRect.bottom < bRect.top ||
+        aRect.left > bRect.right ||
+        aRect.right < bRect.left
+      );
+    }
+
+    // Game loop
+    function gameLoop() {
+      // Move enemies
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        if(e.side === 'back') e.y += e.speed;
+        if(e.side === 'left') e.x += e.speed;
+        if(e.side === 'right') e.x -= e.speed;
+
+        e.el.style.top = `${e.y}px`;
+        e.el.style.left = `${e.x}px`;
+
+        // Remove if offscreen
+        if(e.x < -250 || e.x > window.innerWidth+250 || e.y > window.innerHeight+250) {
+          e.el.remove();
+          enemies.splice(i,1);
+        }
+      }
+
+      // Move orbs
+      for (let j = orbs.length - 1; j >= 0; j--) {
+        const o = orbs[j];
+        o.y -= o.speed;
+        o.el.style.top = `${o.y}px`;
+
+        // Fire trail
+        createTrail(o.x, o.y+40);
+
+        if(o.y < -100) {
+          o.el.remove();
+          orbs.splice(j,1);
+        }
+      }
+
+      // Check collisions
+      for (let i = enemies.length -1; i>=0; i--) {
+        for (let j = orbs.length -1; j>=0; j--) {
+          if(isColliding(enemies[i].el, orbs[j].el)) {
+            enemies[i].el.classList.add("explosion");
+            setTimeout(()=> enemies[i].el.remove(),600);
+
+            orbs[j].el.remove();
+
+            enemies.splice(i,1);
+            orbs.splice(j,1);
+            break;
+          }
+        }
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Tap to shoot
+    window.addEventListener("click", shootOrb);
+
+    // Spawn enemies every 2s
+    setInterval(spawnEnemy, 2000);
+
+    // Start loop
+    gameLoop();
+  </script>
+</body>
+</html>
