@@ -5,54 +5,56 @@
   <title>Tiffyverse Portal</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #000; }
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:#000; }
   </style>
 </head>
 <body>
-
   <a-scene>
 
     <!-- Player camera -->
     <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
 
-    <!-- Floor -->
-    <a-plane src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.jpg"
-             rotation="-90 0 0" width="200" height="200" position="0 0 0"></a-plane>
-
-    <!-- Sky cube sides -->
-    <!-- Front video -->
-    <a-plane src="#frontVideo" position="0 50 -50" rotation="0 0 0" width="100" height="100"></a-plane>
-    <!-- Back -->
-    <a-plane src="#backImg" position="0 50 50" rotation="0 180 0" width="100" height="100"></a-plane>
-    <!-- Left -->
-    <a-plane src="#leftImg" position="-50 50 0" rotation="0 90 0" width="100" height="100"></a-plane>
-    <!-- Right -->
-    <a-plane src="#rightImg" position="50 50 0" rotation="0 -90 0" width="100" height="100"></a-plane>
-    <!-- Top -->
-    <a-plane src="#topImg" position="0 100 0" rotation="-90 0 0" width="100" height="100"></a-plane>
-
-    <!-- Assets -->
+    <!-- Assets: 6 video sides -->
     <a-assets>
       <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous">
         <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4" type="video/mp4">
       </video>
-
-      <img id="backImg" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.jpg">
-      <img id="leftImg" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.jpg">
-      <img id="rightImg" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.jpg">
-      <img id="topImg" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.jpg">
+      <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4" type="video/mp4">
+      </video>
+      <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4" type="video/mp4">
+      </video>
+      <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4" type="video/mp4">
+      </video>
+      <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4" type="video/mp4">
+      </video>
+      <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous">
+        <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4" type="video/mp4">
+      </video>
     </a-assets>
+
+    <!-- Sky cube planes -->
+    <a-plane src="#frontVideo" position="0 50 -50" rotation="0 0 0" width="100" height="100"></a-plane>
+    <a-plane src="#backVideo" position="0 50 50" rotation="0 180 0" width="100" height="100"></a-plane>
+    <a-plane src="#leftVideo" position="-50 50 0" rotation="0 90 0" width="100" height="100"></a-plane>
+    <a-plane src="#rightVideo" position="50 50 0" rotation="0 -90 0" width="100" height="100"></a-plane>
+    <a-plane src="#topVideo" position="0 100 0" rotation="-90 0 0" width="100" height="100"></a-plane>
+    <a-plane src="#bottomVideo" position="0 0 0" rotation="-90 0 0" width="200" height="200"></a-plane>
 
   </a-scene>
 
   <script>
-    // Ensure video plays on mobile
+    // Ensure all videos play on mobile
     window.addEventListener('load', () => {
-      const vid = document.getElementById('frontVideo');
-      vid.muted = true;
-      vid.play().catch(err => console.warn("Autoplay blocked:", err));
+      ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo'].forEach(id => {
+        const vid = document.getElementById(id);
+        vid.muted = true;
+        vid.play().catch(err => console.warn(`Autoplay blocked for ${id}:`, err));
+      });
     });
   </script>
-
 </body>
 </html>
