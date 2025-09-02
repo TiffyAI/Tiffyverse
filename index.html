@@ -112,7 +112,7 @@ function playSound(id, vol=1.0){
     }catch(e){}
 }
 
-/* ---------- Spawning enemies (CORRECTED) ---------- */
+/* ---------- Spawning enemies (CORRECTED AGAIN) ---------- */
 function spawnEnemy() {
     const cube = document.createElement('a-box');
     cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
@@ -121,28 +121,24 @@ function spawnEnemy() {
     cube.setAttribute('depth', 3);
     cube.setAttribute('class', 'enemy');
 
-    // Get the camera's current position and forward direction
-    const cameraPosition = camera.object3D.getWorldPosition(new THREE.Vector3());
-    const cameraForward = camera.object3D.getWorldDirection(new THREE.Vector3());
-    const cameraUp = camera.object3D.up;
-    const cameraRight = new THREE.Vector3().crossVectors(cameraForward, cameraUp);
-
-    // Define a fixed distance and a horizontal/vertical spawn range
     const spawnDistance = 80;
-    const spawnHorizontalRange = 50; 
-    const spawnVerticalRange = 30;
+    const horizontalRange = 50; 
+    const verticalRange = 30;
 
-    // Generate random offsets within the defined range
-    const randX = (Math.random() - 0.5) * 2 * spawnHorizontalRange;
-    const randY = (Math.random() - 0.5) * 2 * spawnVerticalRange;
+    // Generate a random position relative to an unrotated camera's front view
+    const randX = (Math.random() - 0.5) * 2 * horizontalRange;
+    const randY = (Math.random() - 0.5) * 2 * verticalRange;
+    const localPos = new THREE.Vector3(randX, randY, -spawnDistance);
 
-    // Calculate the new position in front of the camera
-    const pos = cameraPosition.clone()
-        .add(cameraForward.clone().multiplyScalar(spawnDistance)) // Correctly move FORWARD from the camera
-        .add(cameraRight.clone().multiplyScalar(randX))
-        .add(cameraUp.clone().multiplyScalar(randY));
+    // Get the player's current rotation and position
+    const playerRotation = camera.object3D.rotation;
+    const playerPosition = camera.object3D.getWorldPosition(new THREE.Vector3());
+
+    // Rotate the local position and add the player's position to get the final world position
+    localPos.applyEuler(playerRotation);
+    const worldPos = playerPosition.clone().add(localPos);
     
-    cube.object3D.position.copy(pos);
+    cube.object3D.position.copy(worldPos);
     scene.appendChild(cube);
     const rotSpeed = (Math.random() - 0.5) * 0.05;
     window.globalEnemies.push({el: cube, speed: 0.15 + Math.random() * 0.15, rotSpeed: rotSpeed});
