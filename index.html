@@ -3,227 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <title>TiffyAI AR Shooter</title>
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-    }
-
-    /* Background videos stacked */
-    video.bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: -2;
-      opacity: 0.85;
-    }
-
-    /* Enemies */
-    .enemy {
-      position: absolute;
-      width: 200px;
-      height: 200px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-
-    /* Orbs (player shots) */
-    .orb {
-      position: absolute;
-      width: 80px;
-      height: 80px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 5;
-      filter: drop-shadow(0 0 15px #00f0ff) drop-shadow(0 0 20px #00f0ff);
-    }
-
-    /* Magic trail for orbs */
-    .trail {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      background: radial-gradient(circle, rgba(0,255,255,0.8) 0%, rgba(0,255,255,0) 70%);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 4;
-      animation: trailFade 0.3s linear forwards;
-    }
-
-    @keyframes trailFade {
-      0% { opacity: 0.8; transform: scale(1); }
-      100% { opacity: 0; transform: scale(1.5); }
-    }
-
-    /* Explosion animation */
-    @keyframes explode {
-      0%   { transform: scale(1); opacity: 1; }
-      50%  { transform: scale(1.6); opacity: 0.8; }
-      100% { transform: scale(0); opacity: 0; }
-    }
-    .explosion {
-      animation: explode 0.6s ease-out forwards;
+    body, html {
+      margin:0;
+      padding:0;
+      height:100%;
+      overflow:hidden;
+      background:black;
     }
   </style>
 </head>
 <body>
-  <!-- Background videos -->
-  <video id="front" class="bg" autoplay muted loop src="front.mp4"></video>
-  <video id="back" class="bg" autoplay muted loop src="back.mp4"></video>
-  <video id="left" class="bg" autoplay muted loop src="left.mp4"></video>
-  <video id="right" class="bg" autoplay muted loop src="right.mp4"></video>
-  <video id="top" class="bg" autoplay muted loop src="top.mp4"></video>
-  <video id="bottom" class="bg" autoplay muted loop src="bottom.mp4"></video>
+  <a-scene embedded vr-mode-ui="enabled: true">
+
+    <!-- Assets -->
+    <a-assets>
+      <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous" src="front.mp4"></video>
+      <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous" src="back.mp4"></video>
+      <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous" src="left.mp4"></video>
+      <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous" src="right.mp4"></video>
+      <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous" src="top.mp4"></video>
+      <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous" src="bottom.mp4"></video>
+
+      <video id="orbVideo" autoplay loop muted playsinline src="orb.mp4"></video>
+      <video id="enemyVideo" autoplay loop muted playsinline src="enemies.mp4"></video>
+    </a-assets>
+
+    <!-- Skybox cube using planes -->
+    <a-plane src="#frontVideo" position="0 1.6 -50" rotation="0 0 0" width="100" height="100"></a-plane>
+    <a-plane src="#backVideo" position="0 1.6 50" rotation="0 180 0" width="100" height="100"></a-plane>
+    <a-plane src="#leftVideo" position="-50 1.6 0" rotation="0 90 0" width="100" height="100"></a-plane>
+    <a-plane src="#rightVideo" position="50 1.6 0" rotation="0 -90 0" width="100" height="100"></a-plane>
+    <a-plane src="#topVideo" position="0 101.6 0" rotation="90 0 0" width="150" height="150"></a-plane>
+    <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
+
+    <!-- Camera with cursor for shooting -->
+    <a-entity id="player" camera look-controls position="0 1.6 0">
+      <a-entity cursor="fuse: false; rayOrigin: mouse"
+                position="0 0 -1"
+                geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02"
+                material="color: #00f0ff; shader: flat">
+      </a-entity>
+    </a-entity>
+
+  </a-scene>
 
   <script>
-    const enemies = [];
+    const scene = document.querySelector('a-scene');
+    const camera = document.getElementById('player');
+
     const orbs = [];
+    const enemies = [];
 
-    // Spawn enemies from random side
-    function spawnEnemy() {
-      const enemy = document.createElement("video");
-      enemy.src = "enemies.mp4";
-      enemy.autoplay = true;
-      enemy.loop = true;
-      enemy.muted = true;
-      enemy.className = "enemy";
-
-      // Choose random side
-      const sides = ['back', 'left', 'right'];
-      const side = sides[Math.floor(Math.random() * sides.length)];
-      let startX, startY;
-
-      if(side === 'back') {
-        startX = Math.random() * window.innerWidth;
-        startY = -200;
-      } else if(side === 'left') {
-        startX = -200;
-        startY = Math.random() * window.innerHeight;
-      } else {
-        startX = window.innerWidth + 200;
-        startY = Math.random() * window.innerHeight;
-      }
-
-      enemy.style.left = `${startX}px`;
-      enemy.style.top = `${startY}px`;
-
-      document.body.appendChild(enemy);
-
-      enemies.push({ el: enemy, x: startX, y: startY, side: side, speed: 2 + Math.random()*2 });
-    }
-
-    // Shoot orb from center bottom
+    // Helper: create orb entity
     function shootOrb() {
-      const orb = document.createElement("video");
-      orb.src = "orb.mp4";
-      orb.autoplay = true;
-      orb.loop = true;
-      orb.muted = true;
-      orb.className = "orb";
+      const orb = document.createElement('a-video');
+      orb.setAttribute('src', '#orbVideo');
+      orb.setAttribute('width', '1');
+      orb.setAttribute('height', '1');
+      orb.setAttribute('position', camera.getAttribute('position'));
+      orb.object3D.position.z -= 1; // in front of camera
+      scene.appendChild(orb);
 
-      const startX = window.innerWidth / 2;
-      const startY = window.innerHeight - 150;
+      const direction = new THREE.Vector3();
+      camera.object3D.getWorldDirection(direction);
 
-      orb.style.left = `${startX}px`;
-      orb.style.top = `${startY}px`;
-
-      document.body.appendChild(orb);
-
-      orbs.push({ el: orb, x: startX, y: startY, speed: 12 });
+      orbs.push({el: orb, dir: direction, speed: 1});
     }
 
-    // Create magic trail for orb
-    function createTrail(x, y) {
-      const trail = document.createElement("div");
-      trail.className = "trail";
-      trail.style.left = `${x}px`;
-      trail.style.top = `${y}px`;
-      document.body.appendChild(trail);
-      setTimeout(() => trail.remove(), 300);
+    // Helper: spawn enemy at random back/left/right
+    function spawnEnemy() {
+      const enemy = document.createElement('a-video');
+      enemy.setAttribute('src', '#enemyVideo');
+      enemy.setAttribute('width', '2');
+      enemy.setAttribute('height', '2');
+
+      const pos = {x: 0, y: 1.6, z: -30}; // start behind camera
+      const side = Math.floor(Math.random() * 3);
+      if(side===0) pos.x = -40;   // left
+      if(side===1) pos.x = 40;    // right
+      if(side===2) pos.z = -50;   // back
+
+      enemy.setAttribute('position', pos);
+      scene.appendChild(enemy);
+
+      const direction = new THREE.Vector3();
+      direction.subVectors(camera.object3D.position, new THREE.Vector3(pos.x,pos.y,pos.z)).normalize();
+
+      enemies.push({el: enemy, dir: direction, speed: 0.1 + Math.random()*0.1});
     }
 
-    // Collision detection
-    function isColliding(a, b) {
-      const aRect = a.getBoundingClientRect();
-      const bRect = b.getBoundingClientRect();
-      return !(
-        aRect.top > bRect.bottom ||
-        aRect.bottom < bRect.top ||
-        aRect.left > bRect.right ||
-        aRect.right < bRect.left
-      );
-    }
-
-    // Game loop
+    // Move orbs and enemies
     function gameLoop() {
-      // Move enemies
-      for (let i = enemies.length - 1; i >= 0; i--) {
+      for(let i=orbs.length-1;i>=0;i--){
+        const o = orbs[i];
+        o.el.object3D.position.addScaledVector(o.dir, o.speed);
+      }
+
+      for(let i=enemies.length-1;i>=0;i--){
         const e = enemies[i];
-        if(e.side === 'back') e.y += e.speed;
-        if(e.side === 'left') e.x += e.speed;
-        if(e.side === 'right') e.x -= e.speed;
-
-        e.el.style.top = `${e.y}px`;
-        e.el.style.left = `${e.x}px`;
-
-        if(e.x < -250 || e.x > window.innerWidth+250 || e.y > window.innerHeight+250) {
-          e.el.remove();
-          enemies.splice(i,1);
-        }
-      }
-
-      // Move orbs
-      for (let j = orbs.length - 1; j >= 0; j--) {
-        const o = orbs[j];
-        o.y -= o.speed;
-        o.el.style.top = `${o.y}px`;
-
-        createTrail(o.x, o.y+40);
-
-        if(o.y < -100) {
-          o.el.remove();
-          orbs.splice(j,1);
-        }
-      }
-
-      // Check collisions
-      for (let i = enemies.length -1; i>=0; i--) {
-        for (let j = orbs.length -1; j>=0; j--) {
-          if(isColliding(enemies[i].el, orbs[j].el)) {
-            enemies[i].el.classList.add("explosion");
-            setTimeout(()=> enemies[i].el.remove(),600);
-
-            orbs[j].el.remove();
-
-            enemies.splice(i,1);
-            orbs.splice(j,1);
-            break;
-          }
-        }
+        e.el.object3D.position.addScaledVector(e.dir, e.speed);
       }
 
       requestAnimationFrame(gameLoop);
     }
 
-    // Tap anywhere to shoot
-    window.addEventListener("click", shootOrb);
+    // Tap or click to shoot
+    window.addEventListener('click', shootOrb);
 
-    // Spawn enemies every 2 seconds
-    setInterval(spawnEnemy, 2000);
+    // Spawn enemies every 3s
+    setInterval(spawnEnemy, 3000);
 
-    // Start game loop
+    // Start loop
     gameLoop();
 
-    // Ensure videos play on mobile
+    // Ensure all videos play on mobile
     window.addEventListener('load', () => {
-      ['front','back','left','right','top','bottom'].forEach(id => {
+      ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo','orbVideo','enemyVideo'].forEach(id => {
         const vid = document.getElementById(id);
         vid.muted = true;
-        vid.play().catch(err => console.warn(`Autoplay blocked for ${id}:`, err));
+        vid.play().catch(err => console.warn(`${id} autoplay blocked`, err));
       });
     });
   </script>
