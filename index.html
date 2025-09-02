@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TiffyAI AR Block Shooter</title>
+<script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+<style>
+  body, html { margin:0; padding:0; height:100%; overflow:hidden; background:black; font-family: monospace; }
+  #score {
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    color:#00f0ff; font-size:20px; font-family: monospace;
+    z-index:9999; background: rgba(0,0,0,0.2); padding:8px 15px; border-radius:10px;
+  }
+</style>
+</head>
+<body>
+<div id="score">TIFFY Earnings: 0</div>
+
+<a-scene background="color:black" vr-mode-ui="enabled: true">
+
+  <!-- Assets -->
+  <a-assets>
+    <video id="frontVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4"></video>
+    <video id="backVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4"></video>
+    <video id="leftVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4"></video>
+    <video id="topVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4"></video>
+    <video id="bottomVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4"></video>
+    
+    <video id="enemyVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
+
+    <!-- Sounds -->
+    <audio id="explodeSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/blocks.wav"></audio>
+    <audio id="enemySwooch" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
+    <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" autoplay loop></audio>
+  </a-assets>
+
+  <!-- Environment planes -->
+  <a-plane src="#frontVideo" position="0 1.6 -20" rotation="0 0 0" width="50" height="50"></a-plane>
+  <a-plane src="#backVideo" position="0 1.6 20" rotation="0 180 0" width="50" height="50"></a-plane>
+  <a-plane src="#leftVideo" position="-30 1.6 0" rotation="0 90 0" width="50" height="50"></a-plane>
+  <!-- Pyramid effect for right side (fake depth) -->
+  <a-plane src="#leftVideo" position="15 1.6 -15" rotation="0 -45 0" width="50" height="50"></a-plane>
+  <a-plane src="#leftVideo" position="15 1.6 15" rotation="0 -135 0" width="50" height="50"></a-plane>
+  <a-plane src="#topVideo" position="0 101.6 0" rotation="90 0 0" width="150" height="150"></a-plane>
+  <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
+
+  <!-- Player camera close to front -->
+  <a-entity id="player" camera look-controls wasd-controls position="0 1.6 -5"></a-entity>
+
+</a-scene>
+
+<script>
+  // Play videos and music
+  window.addEventListener('load',()=>{
+    ['frontVideo','backVideo','leftVideo','topVideo','bottomVideo','enemyVideo'].forEach(id=>{
+      const vid = document.getElementById(id); vid.muted=true; vid.play().catch(()=>{});
+    });
+    const bg = document.getElementById('bgMusic'); bg.volume=0.3; bg.play().catch(()=>{});
+  });
+
+  const scene = document.querySelector('a-scene');
+  const camera = document.getElementById('player');
+  const enemies = [];
+  let score = parseInt(localStorage.getItem('tetrusScore') || '0');
+  const scoreEl = document.getElementById('score');
+  scoreEl.textContent = `TIFFY Earnings: ${score}`;
+
+  function spawnEnemy(){
+    const enemy = document.createElement('a-video');
+    enemy.setAttribute('src','#enemyVideo');
+    enemy.setAttribute('width','3');
+    enemy.setAttribute('height','3');
+    enemy.setAttribute('transparent','true');
+
+    const side = Math.floor(Math.random()*2); // 0=back,1=left
+    let pos = new THREE.Vector3();
+    if(side===0){ pos.set(Math.random()*20-10,2,20); }       // back
+    else { pos.set(-20,2,Math.random()*20-10); }             // left
+
+    enemy.object3D.position.copy(pos);
+    scene.appendChild(enemy);
+    enemies.push({el:enemy,side,speed:0.15+Math.random()*0.15});
+
+    // swooch sound
+    const swooch = document.getElementById('enemySwooch').cloneNode();
+    swooch.play();
+  }
+
+  function isColliding(a,b){
+    return a.object3D.position.distanceTo(b.object3D.position)<2;
+  }
+
+  function gameLoop(){
+    enemies.forEach((e,i)=>{
+      // Rotate towards player
+      e.el.object3D.lookAt(camera.object3D.position);
+      // Move forward
+      const dir = new THREE.Vector3();
+      dir.subVectors(camera.object3D.position,e.el.object3D.position).normalize();
+      e.el.object3D.position.add(dir.multiplyScalar(e.speed));
+
+      if(e.el.object3D.position.distanceTo(camera.object3D.position)<1){
+        // Increment score
+        score += 1;
+        localStorage.setItem('tetrusScore',score);
+        scoreEl.textContent = `TIFFY Earnings: ${score}`;
+
+        // Explosion
+        const explosion = document.createElement('a-box');
+        explosion.setAttribute('position',e.el.getAttribute('position'));
+        explosion.setAttribute('depth','2'); explosion.setAttribute('height','2'); explosion.setAttribute('width','2');
+        explosion.setAttribute('color','#00ffff');
+        scene.appendChild(explosion);
+        setTimeout(()=>explosion.remove(),300);
+
+        const blockS = document.getElementById('explodeSound').cloneNode();
+        blockS.play();
+
+        e.el.remove();
+        enemies.splice(i,1);
+      }
+    });
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  setInterval(spawnEnemy,2000);
+  gameLoop();
+</script>
+
+</body>
+</html>
