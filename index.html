@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tiffyverse Dome</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- Assets -->
+      <a-assets>
+        <video id="front" autoplay loop="true" muted playsinline webkit-playsinline src="front.mp4"></video>
+        <video id="back" autoplay loop="true" muted playsinline webkit-playsinline src="back.mp4"></video>
+        <video id="left" autoplay loop="true" muted playsinline webkit-playsinline src="left.mp4"></video>
+        <video id="right" autoplay loop="true" muted playsinline webkit-playsinline src="right.mp4"></video>
+        <video id="top" autoplay loop="true" muted playsinline webkit-playsinline src="top.mp4"></video>
+        <video id="bottom" autoplay loop="true" muted playsinline webkit-playsinline src="bottom.mp4"></video>
+      </a-assets>
+
+      <!-- Dome / Sphere with videos stitched -->
+      <a-entity>
+        <!-- FRONT half sphere -->
+        <a-videosphere src="#front" radius="30" rotation="0 0 0"></a-videosphere>
+
+        <!-- BACK half sphere flipped -->
+        <a-videosphere src="#back" radius="30" rotation="0 180 0"></a-videosphere>
+
+        <!-- LEFT -->
+        <a-videosphere src="#left" radius="30" rotation="0 90 0"></a-videosphere>
+
+        <!-- RIGHT -->
+        <a-videosphere src="#right" radius="30" rotation="0 -90 0"></a-videosphere>
+
+        <!-- TOP -->
+        <a-videosphere src="#top" radius="30" rotation="-90 0 0"></a-videosphere>
+
+        <!-- BOTTOM -->
+        <a-videosphere src="#bottom" radius="30" rotation="90 0 0"></a-videosphere>
+      </a-entity>
+
+      <!-- Camera -->
+      <a-entity camera look-controls position="0 1.6 0"></a-entity>
+    </a-scene>
+  </body>
+</html>
