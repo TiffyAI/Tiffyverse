@@ -13,15 +13,31 @@
     <!-- Player camera -->
     <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
 
-    <!-- Floor plane at y=0 -->
+    <!-- Floor at y=0 -->
     <a-plane src="assets/bottom.jpg" rotation="-90 0 0" width="200" height="200" position="0 0 0"></a-plane>
 
-    <!-- Sky cube made of 6 planes -->
-    <a-plane src="assets/front.jpg" position="0 50 -50" rotation="-90 0 0" width="200" height="100"></a-plane>
-    <a-plane src="assets/back.jpg" position="0 50 50" rotation="-90 180 0" width="200" height="100"></a-plane>
-    <a-plane src="assets/left.jpg" position="-50 50 0" rotation="-90 90 0" width="200" height="100"></a-plane>
-    <a-plane src="assets/right.jpg" position="50 50 0" rotation="-90 -90 0" width="200" height="100"></a-plane>
-    <a-plane src="assets/top.jpg" position="0 100 0" rotation="-90 0 0" width="200" height="200"></a-plane>
+    <!-- Sky cube using 6 images -->
+    <!-- Front -->
+    <a-plane src="assets/front.jpg" position="0 50 -50" rotation="0 0 0" width="100" height="100"></a-plane>
+    <!-- Back -->
+    <a-plane src="assets/back.jpg" position="0 50 50" rotation="0 180 0" width="100" height="100"></a-plane>
+    <!-- Left -->
+    <a-plane src="assets/left.jpg" position="-50 50 0" rotation="0 90 0" width="100" height="100"></a-plane>
+    <!-- Right -->
+    <a-plane src="assets/right.jpg" position="50 50 0" rotation="0 -90 0" width="100" height="100"></a-plane>
+    <!-- Top -->
+    <a-plane src="assets/top.jpg" position="0 100 0" rotation="-90 0 0" width="100" height="100"></a-plane>
+    <!-- Optional bottom (floor is separate) -->
+    <!-- <a-plane src="assets/bottom.jpg" position="0 -50 0" rotation="90 0 0" width="100" height="100"></a-plane> -->
+
+    <a-assets>
+      <img id="frontImg" src="assets/front.jpg">
+      <img id="backImg" src="assets/back.jpg">
+      <img id="leftImg" src="assets/left.jpg">
+      <img id="rightImg" src="assets/right.jpg">
+      <img id="topImg" src="assets/top.jpg">
+      <img id="bottomImg" src="assets/bottom.jpg">
+    </a-assets>
   </a-scene>
 </body>
 </html>
