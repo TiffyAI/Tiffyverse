@@ -2,44 +2,60 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Tiffyverse Dome</title>
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <title>Tiffyverse 360</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   </head>
   <body>
-    <a-scene>
-      <!-- Assets -->
-      <a-assets>
-        <video id="front" autoplay loop="true" muted playsinline webkit-playsinline src="front.mp4"></video>
-        <video id="back" autoplay loop="true" muted playsinline webkit-playsinline src="back.mp4"></video>
-        <video id="left" autoplay loop="true" muted playsinline webkit-playsinline src="left.mp4"></video>
-        <video id="right" autoplay loop="true" muted playsinline webkit-playsinline src="right.mp4"></video>
-        <video id="top" autoplay loop="true" muted playsinline webkit-playsinline src="top.mp4"></video>
-        <video id="bottom" autoplay loop="true" muted playsinline webkit-playsinline src="bottom.mp4"></video>
-      </a-assets>
-
-      <!-- Dome / Sphere with videos stitched -->
-      <a-entity>
-        <!-- FRONT half sphere -->
-        <a-videosphere src="#front" radius="30" rotation="0 0 0"></a-videosphere>
-
-        <!-- BACK half sphere flipped -->
-        <a-videosphere src="#back" radius="30" rotation="0 180 0"></a-videosphere>
-
-        <!-- LEFT -->
-        <a-videosphere src="#left" radius="30" rotation="0 90 0"></a-videosphere>
-
-        <!-- RIGHT -->
-        <a-videosphere src="#right" radius="30" rotation="0 -90 0"></a-videosphere>
-
-        <!-- TOP -->
-        <a-videosphere src="#top" radius="30" rotation="-90 0 0"></a-videosphere>
-
-        <!-- BOTTOM -->
-        <a-videosphere src="#bottom" radius="30" rotation="90 0 0"></a-videosphere>
-      </a-entity>
-
+    <a-scene vr-mode-ui="enabled: true" background="color: black">
       <!-- Camera -->
       <a-entity camera look-controls position="0 1.6 0"></a-entity>
+
+      <!-- Assets -->
+      <a-assets>
+        <video id="frontVideo" autoplay loop="true" muted playsinline webkit-playsinline src="front.mp4"></video>
+        <video id="backVideo" autoplay loop="true" muted playsinline webkit-playsinline src="back.mp4"></video>
+        <video id="leftVideo" autoplay loop="true" muted playsinline webkit-playsinline src="left.mp4"></video>
+        <video id="rightVideo" autoplay loop="true" muted playsinline webkit-playsinline src="right.mp4"></video>
+      </a-assets>
+
+      <!-- Front flat plane -->
+      <a-plane src="#frontVideo" position="0 2 -5" rotation="0 0 0" width="10" height="6"></a-plane>
+
+      <!-- Back curved wall -->
+      <a-cylinder 
+        src="#backVideo" 
+        radius="12" 
+        theta-length="120" 
+        theta-start="120"
+        height="6" 
+        position="0 2 0" 
+        rotation="0 180 0"
+        side="back">
+      </a-cylinder>
+
+      <!-- Left curved wall -->
+      <a-cylinder 
+        src="#leftVideo" 
+        radius="12" 
+        theta-length="120" 
+        theta-start="210"
+        height="6" 
+        position="0 2 0" 
+        rotation="0 90 0"
+        side="back">
+      </a-cylinder>
+
+      <!-- Right curved wall -->
+      <a-cylinder 
+        src="#rightVideo" 
+        radius="12" 
+        theta-length="120" 
+        theta-start="30"
+        height="6" 
+        position="0 2 0" 
+        rotation="0 -90 0"
+        side="back">
+      </a-cylinder>
     </a-scene>
   </body>
 </html>
