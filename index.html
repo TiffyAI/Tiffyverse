@@ -4,192 +4,140 @@
   <meta charset="UTF-8">
   <title>TiffyAI AR Shooter</title>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: black;
-    }
-
-    /* Background Videos */
+    body { margin:0; overflow:hidden; background:black; }
     video.bg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      z-index: -2;
-      opacity: 0.85;
+      position:absolute; top:0; left:0; width:100%; height:100%;
+      object-fit:cover; z-index:-2; opacity:0.85;
     }
-
-    /* Enemies */
-    .enemy {
-      position: absolute;
-      width: 120px;
-      height: 120px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
+    .enemy, .orb {
+      position:absolute; transform:translate(-50%,-50%); pointer-events:none;
     }
+    .enemy { width:120px; height:120px; z-index:3; }
+    .orb { width:60px; height:60px; z-index:4; }
 
-    /* Orbs (player shots) */
-    .orb {
-      position: absolute;
-      width: 60px;
-      height: 60px;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    /* Explosion animation */
     @keyframes explode {
-      0%   { transform: scale(1); opacity: 1; }
-      50%  { transform: scale(1.6); opacity: 0.8; }
-      100% { transform: scale(0); opacity: 0; }
+      0%   { transform:scale(1); opacity:1; }
+      50%  { transform:scale(1.6); opacity:0.8; }
+      100% { transform:scale(0); opacity:0; }
     }
-    .explosion {
-      animation: explode 0.6s ease-out forwards;
-    }
+    .explosion { animation:explode 0.6s ease-out forwards; }
 
-    /* Glass HUD overlay (TiffyAI style) */
     #hud {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      padding: 10px 20px;
-      color: #00f0ff;
-      font-family: monospace;
-      font-size: 18px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 0 20px rgba(0,255,255,0.4);
+      position:absolute; top:10px; left:50%; transform:translateX(-50%);
+      background: rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.3);
+      border-radius:12px; padding:10px 20px; color:#00f0ff;
+      font-family: monospace; font-size:18px; backdrop-filter: blur(8px);
+      box-shadow:0 0 20px rgba(0,255,255,0.4);
+      z-index:10;
     }
   </style>
 </head>
 <body>
-  <!-- Background videos -->
-  <video id="front" class="bg" autoplay muted loop src="front.mp4"></video>
-  <video id="back" class="bg" autoplay muted loop src="back.mp4"></video>
-  <video id="left" class="bg" autoplay muted loop src="left.mp4"></video>
-  <video id="right" class="bg" autoplay muted loop src="right.mp4"></video>
 
-  <!-- HUD -->
-  <div id="hud">👾 Tap to shoot magic orbs!</div>
+<!-- Background cube -->
+<video id="front" class="bg" autoplay muted loop src="front.mp4"></video>
+<video id="back" class="bg" autoplay muted loop src="back.mp4"></video>
+<video id="left" class="bg" autoplay muted loop src="left.mp4"></video>
+<video id="right" class="bg" autoplay muted loop src="right.mp4"></video>
+<video id="top" class="bg" autoplay muted loop src="top.mp4"></video>
+<video id="bottom" class="bg" autoplay muted loop src="bottom.mp4"></video>
 
-  <script>
-    const enemies = [];
-    const orbs = [];
+<!-- HUD -->
+<div id="hud">👾 Tap to shoot magic orbs!</div>
 
-    // Spawn enemies from random side
-    function spawnEnemy() {
-      const enemy = document.createElement("video");
-      enemy.src = "enemies.gif";
-      enemy.autoplay = true;
-      enemy.loop = true;
-      enemy.muted = true;
-      enemy.className = "enemy";
+<script>
+  const enemies = [];
+  const orbs = [];
+  const spawnSides = ['back','left','right'];
 
-      // random start X across screen width
-      let startX = Math.random() * window.innerWidth;
-      let startY = -100; // spawn from top
+  function spawnEnemy() {
+    const side = spawnSides[Math.floor(Math.random()*spawnSides.length)];
+    const enemy = document.createElement("video");
+    enemy.src = "enemies.mp4";
+    enemy.autoplay = true;
+    enemy.loop = true;
+    enemy.muted = true;
+    enemy.className = "enemy";
 
-      enemy.style.left = `${startX}px`;
-      enemy.style.top = `${startY}px`;
+    let startX, startY;
+    if(side==='back') { startX = window.innerWidth/2; startY = -100; }
+    if(side==='left') { startX = -100; startY = window.innerHeight/2; }
+    if(side==='right'){ startX = window.innerWidth+100; startY = window.innerHeight/2; }
 
-      document.body.appendChild(enemy);
+    enemy.style.left = `${startX}px`;
+    enemy.style.top = `${startY}px`;
 
-      enemies.push({ el: enemy, x: startX, y: startY, speed: 2 + Math.random()*2 });
+    document.body.appendChild(enemy);
+    enemies.push({el:enemy,x:startX,y:startY,speed:3,dir:side});
+  }
+
+  function shootOrb() {
+    const orb = document.createElement("video");
+    orb.src = "orb.mp4";
+    orb.autoplay = true;
+    orb.loop = true;
+    orb.muted = true;
+    orb.className = "orb";
+
+    let startX = window.innerWidth/2;
+    let startY = window.innerHeight - 150;
+    orb.style.left = `${startX}px`;
+    orb.style.top = `${startY}px`;
+
+    document.body.appendChild(orb);
+    orbs.push({el:orb,x:startX,y:startY,speed:8});
+  }
+
+  function isColliding(a,b){
+    const aRect = a.getBoundingClientRect();
+    const bRect = b.getBoundingClientRect();
+    return !(aRect.top>bRect.bottom || aRect.bottom<bRect.top || aRect.left>bRect.right || aRect.right<bRect.left);
+  }
+
+  function gameLoop(){
+    // move enemies
+    for(let i=enemies.length-1;i>=0;i--){
+      const e = enemies[i];
+      if(e.dir==='back'){ e.y += e.speed; }
+      if(e.dir==='left'){ e.x += e.speed; }
+      if(e.dir==='right'){ e.x -= e.speed; }
+      e.el.style.top = `${e.y}px`;
+      e.el.style.left = `${e.x}px`;
+
+      if(e.x<-150 || e.x>window.innerWidth+150 || e.y>window.innerHeight+150){ 
+        e.el.remove(); enemies.splice(i,1); 
+      }
     }
 
-    // Shoot orb from center bottom (Tiffy's arm)
-    function shootOrb() {
-      const orb = document.createElement("video");
-      orb.src = "orb.gif";
-      orb.autoplay = true;
-      orb.loop = true;
-      orb.muted = true;
-      orb.className = "orb";
-
-      let startX = window.innerWidth / 2;
-      let startY = window.innerHeight - 150;
-
-      orb.style.left = `${startX}px`;
-      orb.style.top = `${startY}px`;
-
-      document.body.appendChild(orb);
-
-      orbs.push({ el: orb, x: startX, y: startY, speed: 8 });
+    // move orbs
+    for(let j=orbs.length-1;j>=0;j--){
+      const o = orbs[j];
+      o.y -= o.speed;
+      o.el.style.top = `${o.y}px`;
+      if(o.y<-100){ o.el.remove(); orbs.splice(j,1);}
     }
 
-    // Collision detection helper
-    function isColliding(a, b) {
-      const aRect = a.getBoundingClientRect();
-      const bRect = b.getBoundingClientRect();
-      return !(
-        aRect.top > bRect.bottom ||
-        aRect.bottom < bRect.top ||
-        aRect.left > bRect.right ||
-        aRect.right < bRect.left
-      );
-    }
-
-    // Game loop
-    function gameLoop() {
-      // Move enemies down
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        let e = enemies[i];
-        e.y += e.speed;
-        e.el.style.top = `${e.y}px`;
-
-        if (e.y > window.innerHeight + 100) {
-          e.el.remove();
-          enemies.splice(i, 1);
+    // collision
+    for(let i=enemies.length-1;i>=0;i--){
+      for(let j=orbs.length-1;j>=0;j--){
+        if(isColliding(enemies[i].el,orbs[j].el)){
+          enemies[i].el.classList.add("explosion");
+          setTimeout(()=>enemies[i].el.remove(),600);
+          orbs[j].el.remove();
+          enemies.splice(i,1);
+          orbs.splice(j,1);
+          break;
         }
       }
-
-      // Move orbs up
-      for (let j = orbs.length - 1; j >= 0; j--) {
-        let o = orbs[j];
-        o.y -= o.speed;
-        o.el.style.top = `${o.y}px`;
-
-        if (o.y < -100) {
-          o.el.remove();
-          orbs.splice(j, 1);
-        }
-      }
-
-      // Check collisions
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        for (let j = orbs.length - 1; j >= 0; j--) {
-          if (isColliding(enemies[i].el, orbs[j].el)) {
-            // explosion
-            enemies[i].el.classList.add("explosion");
-            setTimeout(() => enemies[i].el.remove(), 600);
-
-            orbs[j].el.remove();
-
-            enemies.splice(i, 1);
-            orbs.splice(j, 1);
-            break;
-          }
-        }
-      }
-
-      requestAnimationFrame(gameLoop);
     }
 
-    // Shoot on tap
-    window.addEventListener("click", shootOrb);
+    requestAnimationFrame(gameLoop);
+  }
 
-    // Spawn enemy every 2s
-    setInterval(spawnEnemy, 2000);
+  window.addEventListener("click",shootOrb);
+  setInterval(spawnEnemy,2000);
+  gameLoop();
+</script>
 
-    // Start loop
-    gameLoop();
-  </script>
 </body>
 </html>
