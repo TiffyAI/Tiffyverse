@@ -1,222 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>TiffyAI Block Defense</title>
-  <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>TiffyAI Arena</title>
   <style>
-    #scoreBoard {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      font-size: 22px;
-      font-family: monospace;
-      color: #00ffe0;
-      background: rgba(0,0,0,0.5);
-      padding: 6px 12px;
-      border-radius: 6px;
-    }
+    body { margin: 0; overflow: hidden; background: black; }
+    canvas { display: block; }
   </style>
 </head>
 <body>
-  <div id="scoreBoard">Score: 0.000 TIFFY</div>
-  <a-scene>
-    <!-- Background -->
-    <a-videosphere src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4" rotation="0 -90 0"></a-videosphere>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/PointerLockControls.js"></script>
+<script>
+let scene, camera, renderer, controls;
+let projectiles = [];
+let enemies = [];
+let score = 0;
 
-    <!-- Player -->
-    <a-entity id="player" position="0 1.6 0" camera look-controls wasd-controls></a-entity>
+// INIT
+scene = new THREE.Scene();
+camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 5000);
+renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-    <!-- Floor + Ceiling (wider area) -->
-    <a-plane rotation="-90 0 0" width="200" height="200" color="#222"></a-plane>
-    <a-plane rotation="90 0 0" position="0 50 0" width="200" height="200" color="#111"></a-plane>
+// LIGHT
+const hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1.2);
+scene.add(hemi);
 
-    <!-- Sounds -->
-    <a-assets>
-      <audio id="shoot-sound" src="fire.wav"></audio>
-      <audio id="explode-sound" src="blocks.wav"></audio>
-      <audio id="swoosh-sound" src="swooch.wav"></audio>
-      <audio id="bg-music" src="playing.wav" preload="auto"></audio>
-    </a-assets>
+// VIDEO BACKGROUND
+const video = document.createElement('video');
+video.src = "https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4";
+video.loop = true;
+video.muted = true;
+video.play();
 
-    <a-entity sound="src: #bg-music; autoplay: true; loop: true; volume: 0.4"></a-entity>
-  </a-scene>
+const videoTex = new THREE.VideoTexture(video);
+const skyGeo = new THREE.BoxGeometry(4000, 4000, 4000);
+const skyMat = new THREE.MeshBasicMaterial({ map: videoTex, side: THREE.BackSide });
+const sky = new THREE.Mesh(skyGeo, skyMat);
+scene.add(sky);
 
-  <script>
-    const scene = document.querySelector("a-scene");
-    const player = document.getElementById("player");
-    const scoreBoard = document.getElementById("scoreBoard");
-    let score = 0;
+// GROUND (longer arena)
+const groundGeo = new THREE.PlaneGeometry(4000, 4000, 10, 10);
+const groundMat = new THREE.MeshPhongMaterial({ color:0x222222 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
 
-    // 🎯 Shoot glowing projectile
-    window.addEventListener("click", () => {
-      const proj = document.createElement("a-sphere");
-      proj.setAttribute("radius", "0.1");
-      proj.setAttribute("position", player.getAttribute("position"));
-      proj.setAttribute("color", "#ff00ff");
-      proj.setAttribute("material", "emissive: #ff00ff; emissiveIntensity: 2; shader: standard");
+// CONTROLS
+controls = new THREE.PointerLockControls(camera, document.body);
+document.body.addEventListener("click", ()=>controls.lock());
+camera.position.y = 2;
 
-      // glowing trail
-      proj.setAttribute("particle-system", {
-        preset: "dust",
-        color: "#ff00ff, #00ffff",
-        size: 0.2,
-        opacity: 0.8,
-        particleCount: 50
-      });
+// SHOOTING
+window.addEventListener("click", shoot);
 
-      // movement
-      const dir = new THREE.Vector3();
-      player.object3D.getWorldDirection(dir);
-      proj.bodyVel = dir.multiplyScalar(-0.6); // forward
+function shoot() {
+  const geom = new THREE.SphereGeometry(0.2, 16, 16);
+  const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(`hsl(${Math.random()*360},100%,50%)`) });
+  const sphere = new THREE.Mesh(geom, mat);
+  sphere.position.copy(camera.position);
+  
+  const dir = new THREE.Vector3();
+  camera.getWorldDirection(dir);
+  sphere.userData.vel = dir.multiplyScalar(2);
+  projectiles.push(sphere);
+  scene.add(sphere);
+}
 
-      scene.appendChild(proj);
+// ENEMIES
+function spawnEnemy() {
+  const geom = new THREE.BoxGeometry(2,2,2);
+  const mat = new THREE.MeshPhongMaterial({ color:0xff0000, flatShading:true });
+  const cube = new THREE.Mesh(geom, mat);
 
-      // sound
-      const s = document.createElement("a-entity");
-      s.setAttribute("sound", "src: #shoot-sound; autoplay: true; volume: 0.8");
-      proj.appendChild(s);
+  // Spawn around the arena edges
+  const side = Math.floor(Math.random()*4);
+  const dist = 100 + Math.random()*200;
+  if(side===0) cube.position.set(dist, 2, Math.random()*400-200);
+  if(side===1) cube.position.set(-dist, 2, Math.random()*400-200);
+  if(side===2) cube.position.set(Math.random()*400-200, 2, dist);
+  if(side===3) cube.position.set(Math.random()*400-200, 2, -dist);
 
-      // animate
-      proj.tick = () => {
-        const p = proj.getAttribute("position");
-        proj.setAttribute("position", {
-          x: p.x + proj.bodyVel.x * 5,
-          y: p.y + proj.bodyVel.y * 5,
-          z: p.z + proj.bodyVel.z * 5
-        });
+  cube.userData.vel = new THREE.Vector3((Math.random()-0.5)*0.3,0,(Math.random()-0.5)*0.3);
+  enemies.push(cube);
+  scene.add(cube);
+}
+setInterval(spawnEnemy, 1000);
 
-        // remove if too far
-        if (Math.abs(p.x) > 100 || Math.abs(p.z) > 100) {
-          scene.removeChild(proj);
-        }
+// EXPLOSION PARTICLES
+function explode(pos) {
+  for(let i=0;i<30;i++){
+    const geom = new THREE.SphereGeometry(0.1, 6, 6);
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+    const p = new THREE.Mesh(geom, mat);
+    p.position.copy(pos);
+    p.userData.vel = new THREE.Vector3((Math.random()-0.5)*0.5,(Math.random()-0.5)*0.5,(Math.random()-0.5)*0.5);
+    p.userData.life = 50;
+    scene.add(p);
+    projectiles.push(p);
+  }
+}
 
-        // check collision with enemies
-        document.querySelectorAll(".enemy").forEach(enemy => {
-          const ep = enemy.getAttribute("position");
-          if (ep && p.distanceTo(ep) < 1) {
-            explodeEnemy(enemy);
-            scene.removeChild(proj);
-          }
-        });
-      };
-    });
+// LOOP
+function animate() {
+  requestAnimationFrame(animate);
 
-    // 🧱 Spawn enemies all around
-    function spawnEnemy() {
-      const e = document.createElement("a-box");
-      const side = Math.floor(Math.random() * 4); // 0 front, 1 back, 2 left, 3 right
-      const dist = 60;
-      let x=0, y=Math.random()*6+1, z=0;
-
-      if (side === 0) z = -dist; 
-      if (side === 1) z = dist; 
-      if (side === 2) x = -dist; 
-      if (side === 3) x = dist; 
-
-      e.setAttribute("position", {x, y, z});
-      e.setAttribute("depth", 2);
-      e.setAttribute("height", 2);
-      e.setAttribute("width", 2);
-      e.setAttribute("color", "#666");
-      e.setAttribute("class", "enemy");
-
-      // rotation + movement
-      const dir = new THREE.Vector3(-x, -y+1.6, -z).normalize().multiplyScalar(0.1);
-      e.bodyVel = dir;
-
-      // spin randomly
-      e.rotVel = {
-        x: (Math.random()-0.5)*2,
-        y: (Math.random()-0.5)*2,
-        z: (Math.random()-0.5)*2
-      };
-
-      // swoosh sound
-      const s = document.createElement("a-entity");
-      s.setAttribute("sound", "src: #swoosh-sound; autoplay: true; volume: 0.6");
-      e.appendChild(s);
-
-      // tick
-      e.tick = () => {
-        const p = e.getAttribute("position");
-        e.setAttribute("position", {
-          x: p.x + e.bodyVel.x,
-          y: p.y + e.bodyVel.y,
-          z: p.z + e.bodyVel.z
-        });
-        e.object3D.rotation.x += e.rotVel.x * 0.05;
-        e.object3D.rotation.y += e.rotVel.y * 0.05;
-        e.object3D.rotation.z += e.rotVel.z * 0.05;
-
-        // check hit player
-        const pp = player.getAttribute("position");
-        if (p.distanceTo(pp) < 1.5) {
-          explodeEnemy(e);
-        }
-      };
-
-      scene.appendChild(e);
+  // Move projectiles
+  for(let i=projectiles.length-1;i>=0;i--){
+    const p = projectiles[i];
+    p.position.add(p.userData.vel);
+    if(p.userData.life!==undefined){
+      p.userData.life--;
+      if(p.userData.life<=0){ scene.remove(p); projectiles.splice(i,1); continue; }
     }
+  }
 
-    // 💥 Enemy explosion
-    function explodeEnemy(enemy) {
-      if (!enemy.parentNode) return;
+  // Move enemies
+  for(let i=enemies.length-1;i>=0;i--){
+    const e = enemies[i];
+    e.position.add(e.userData.vel);
 
-      const pos = enemy.getAttribute("position");
-      for (let i = 0; i < 10; i++) {
-        const part = document.createElement("a-box");
-        part.setAttribute("color", "#ff4444");
-        part.setAttribute("depth", 0.3);
-        part.setAttribute("height", 0.3);
-        part.setAttribute("width", 0.3);
-        part.setAttribute("position", pos);
-        scene.appendChild(part);
-
-        const vel = {
-          x: (Math.random()-0.5)*0.8,
-          y: (Math.random()-0.5)*0.8,
-          z: (Math.random()-0.5)*0.8
-        };
-
-        part.tick = () => {
-          const p = part.getAttribute("position");
-          part.setAttribute("position", {
-            x: p.x + vel.x,
-            y: p.y + vel.y,
-            z: p.z + vel.z
-          });
-          part.setAttribute("opacity", (part.getAttribute("opacity")||1) - 0.02);
-          if (part.getAttribute("opacity") <= 0) scene.removeChild(part);
-        };
+    // check hit by projectile
+    for(let j=projectiles.length-1;j>=0;j--){
+      const p = projectiles[j];
+      if(e.position.distanceTo(p.position)<1.5){
+        explode(e.position);
+        scene.remove(e);
+        enemies.splice(i,1);
+        score += 0.002;
+        console.log("Score:",score.toFixed(3),"TIFFY");
+        break;
       }
-
-      // play sound
-      const s = document.createElement("a-entity");
-      s.setAttribute("sound", "src: #explode-sound; autoplay: true; volume: 1");
-      enemy.appendChild(s);
-
-      // remove enemy
-      scene.removeChild(enemy);
-
-      // score
-      score += 0.002;
-      scoreBoard.innerText = "Score: " + score.toFixed(3) + " TIFFY";
     }
+  }
 
-    // 🎲 Game loop
-    function gameTick() {
-      document.querySelectorAll("a-scene a-entity").forEach(ent => {
-        if (ent.tick) ent.tick();
-      });
-      requestAnimationFrame(gameTick);
-    }
-    gameTick();
-
-    // spawn waves
-    setInterval(() => {
-      for (let i = 0; i < 5; i++) spawnEnemy();
-    }, 2000);
-  </script>
+  controls.moveRight(0); // keep controls active
+  renderer.render(scene,camera);
+}
+animate();
+</script>
 </body>
 </html>
