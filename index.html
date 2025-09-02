@@ -61,7 +61,7 @@
     <a-plane src="#bottomVideo" position="0 -1000 0" rotation="90 0 0" width="2000" height="2000"></a-plane>
 
     <a-entity id="player" camera look-controls position="0 1.6 0">
-        <a-entity cursor="fuse: true; fuseTimeout: 500" 
+        <a-entity cursor="fuse: false; rayOrigin: mouse"
                   position="0 0 -1" 
                   geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03" 
                   material="color: #fff; shader: flat"
@@ -72,49 +72,8 @@
 </a-scene>
 
 <script>
-/* ---------- Custom A-Frame Component for Projectile Movement ---------- */
-AFRAME.registerComponent('projectile-mover', {
-    schema: {
-        direction: {type: 'vec3'},
-        speed: {type: 'number', default: 1.5}
-    },
-    tick: function(time, timeDelta) {
-        const moveVector = this.data.direction.clone().multiplyScalar(this.data.speed * timeDelta / 1000);
-        this.el.object3D.position.add(moveVector);
-
-        // Color cycling
-        this.el.hueTick = (this.el.hueTick || 0) + 6 + Math.random() * 8;
-        const h = Math.floor(this.el.hueTick % 360);
-        this.el.setAttribute('material', `shader: standard; emissive: hsl(${h} 100% 60%); emissiveIntensity: 1.2; metalness:0.05; roughness:0.2`);
-
-        // Check for collision with enemies
-        const enemies = document.querySelectorAll('.enemy');
-        const projPos = this.el.object3D.position;
-        for (const enemyEl of enemies) {
-            const enemyPos = enemyEl.object3D.position;
-            if (projPos.distanceTo(enemyPos) < 2.6) {
-                // Collision detected! Explode and clean up.
-                explodeAt(enemyPos.clone());
-                enemyEl.parentNode.removeChild(enemyEl);
-                this.el.parentNode.removeChild(this.el);
-                addScore(0.002);
-                
-                // Remove from the global enemies array
-                const index = enemies.findIndex(e => e === enemyEl);
-                if (index > -1) {
-                    window.globalEnemies.splice(index, 1);
-                }
-                return; // Stop checking this projectile
-            }
-        }
-        
-        // Remove projectile if it gets too far away
-        const cameraPos = document.getElementById('player').object3D.position;
-        if (projPos.distanceTo(cameraPos) > 1500) {
-            this.el.parentNode.removeChild(this.el);
-        }
-    }
-});
+// The projectile-mover component is no longer needed with the raycaster system
+// AFRAME.registerComponent('projectile-mover', { ... });
 
 /* ---------- Game Globals ---------- */
 const scene = document.querySelector('a-scene');
@@ -122,7 +81,7 @@ const camera = document.getElementById('player');
 const effectsParent = document.getElementById('effects-parent');
 const scoreBox = document.getElementById('scoreBox');
 
-window.globalEnemies = []; // Renamed from 'enemies' to 'globalEnemies' to avoid conflicts with component scope
+window.globalEnemies = [];
 
 window.addEventListener('load', () => {
     ['frontVideo','backVideo','leftVideo','topVideo','bottomVideo','enemyVideo', 'rightVideo'].forEach(id=>{
@@ -166,7 +125,6 @@ function spawnEnemy() {
     cube.setAttribute('depth', 4);
     cube.setAttribute('class', 'enemy');
 
-    // Adjusted spawn distances to match the new, larger environment
     const minDist = 600;
     const maxDist = 900;
     const side = Math.floor(Math.random() * 4);
@@ -210,42 +168,6 @@ function spawnEnemy() {
 
     window.globalEnemies.push({ el: cube, speed, rotSpeed });
     playSound('swoochSound', 0.45);
-}
-
-/* ---------- Shooting: glowing spheres with trailing particle system ---------- */
-function shootProjectile(){
-    const sphere = document.createElement('a-entity');
-    // Increased radius and emissive intensity for visibility
-    sphere.setAttribute('geometry', 'primitive: sphere; radius: 0.4');
-    sphere.setAttribute('material', 'shader: standard; emissive: #00ffff; emissiveIntensity: 2; metalness:0.05; roughness:0.2');
-    
-    const start = camera.object3D.getWorldPosition(new THREE.Vector3());
-    const forward = new THREE.Vector3();
-    camera.object3D.getWorldDirection(forward);
-    
-    const spawnPos = start.clone().add(forward.clone().multiplyScalar(1.3));
-    sphere.object3D.position.copy(spawnPos);
-    
-    // Add our new custom component to handle movement and logic
-    sphere.setAttribute('projectile-mover', {
-        direction: forward,
-        speed: 100 // A-Frame component speed is in meters/second
-    });
-
-    const trail = document.createElement('a-entity');
-    trail.setAttribute('particle-system', {
-        preset: 'dust',
-        particleCount: 200, 
-        color: '#00ffff,#88ffcc,#ffffff',
-        size: 0.15,
-        velocityValue: '0 0 0',
-        spread: '0.22 0.22 0.22',
-        duration: 0.6,
-        blending: 2,
-    });
-    sphere.appendChild(trail);
-    effectsParent.appendChild(sphere);
-    playSound('shootSound', 0.9);
 }
 
 /* ---------- Explosion: particle burst + tiny fragments ---------- */
@@ -321,15 +243,46 @@ function tick(now){
             window.globalEnemies.splice(i,1);
         }
     }
-    // The projectile loop is now handled by the 'projectile-mover' component
-    // So we can remove the old projectile update logic from this tick() function.
 
     requestAnimationFrame(tick);
 }
 
 /* ---------- Input (shoot on tap/click) ---------- */
+// This event will now handle all shooting logic
 window.addEventListener('click', (e)=>{
-    shootProjectile();
+    // The raycaster from the cursor fires an 'fusing' event on the intersected object
+    // We can also check for a mouse click on the scene
+    const intersection = camera.components.raycaster.intersection;
+    if (intersection && intersection.object && intersection.object.el && intersection.object.el.classList.contains('enemy')) {
+        const enemyEl = intersection.object.el;
+        const enemyPos = enemyEl.object3D.position;
+
+        // Visual "shot" effect
+        const hitEffect = document.createElement('a-entity');
+        hitEffect.setAttribute('position', `${intersection.point.x} ${intersection.point.y} ${intersection.point.z}`);
+        hitEffect.setAttribute('particle-system', {
+            preset: 'star',
+            particleCount: 20,
+            color: '#00ffff,#ffffff',
+            size: 0.2,
+            velocityValue: '0 0 0',
+            spread: '0.1 0.1 0.1',
+            duration: 0.2
+        });
+        effectsParent.appendChild(hitEffect);
+        setTimeout(()=>{ if(hitEffect.parentNode) hitEffect.parentNode.removeChild(hitEffect); }, 500);
+
+        // Explosion and score logic
+        explodeAt(enemyPos.clone());
+        if (enemyEl.parentNode) enemyEl.parentNode.removeChild(enemyEl);
+
+        const index = window.globalEnemies.findIndex(e => e.el === enemyEl);
+        if (index > -1) {
+            window.globalEnemies.splice(index, 1);
+        }
+        addScore(0.002);
+        playSound('shootSound', 0.9);
+    }
 });
 
 /* ---------- start loop ---------- */
