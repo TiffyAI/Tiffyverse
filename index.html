@@ -1,41 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <title>Tiffyverse VR Room</title>
+    <meta charset="UTF-8" />
+    <title>Immersive Video Room</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   </head>
   <body>
-    <a-scene background="color: black" vr-mode-ui="enabled: true" embedded>
-      
-      <!-- VIDEO ASSETS -->
-      <video id="frontVideo" src="front.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
-      <video id="backVideo" src="back.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
-      <video id="leftVideo" src="left.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
-      <video id="rightVideo" src="right.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
-      <video id="topVideo" src="top.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
-      <video id="bottomVideo" src="bottom.mp4" autoplay loop muted playsinline crossorigin="anonymous"></video>
-      
-      <!-- FRONT -->
-      <a-plane src="#frontVideo" position="0 0 -5" rotation="0 0 0" width="10" height="6"></a-plane>
-      
-      <!-- BACK (slightly further, wider) -->
-      <a-plane src="#backVideo" position="0 0 5" rotation="0 180 0" width="14" height="8"></a-plane>
-      
-      <!-- LEFT (angled inward) -->
-      <a-plane src="#leftVideo" position="-7 0 0" rotation="0 90 5" width="14" height="8"></a-plane>
-      
-      <!-- RIGHT (angled inward) -->
-      <a-plane src="#rightVideo" position="7 0 0" rotation="0 -90 -5" width="14" height="8"></a-plane>
-      
-      <!-- TOP -->
-      <a-plane src="#topVideo" position="0 4 0" rotation="-90 0 0" width="14" height="14"></a-plane>
-      
-      <!-- BOTTOM -->
-      <a-plane src="#bottomVideo" position="0 -4 0" rotation="90 0 0" width="14" height="14"></a-plane>
-      
+    <a-scene>
+      <!-- Assets -->
+      <a-assets>
+        <video id="frontVideo" src="front.mp4" autoplay loop muted playsinline></video>
+        <video id="backVideo" src="back.mp4" autoplay loop muted playsinline></video>
+        <video id="leftVideo" src="left.mp4" autoplay loop muted playsinline></video>
+        <video id="rightVideo" src="right.mp4" autoplay loop muted playsinline></video>
+      </a-assets>
+
+      <!-- Front Wall -->
+      <a-video src="#frontVideo" position="0 0 -5" rotation="0 0 0" width="10" height="6"></a-video>
+
+      <!-- Back Wall -->
+      <a-video src="#backVideo" position="0 0 5" rotation="0 180 0" width="14" height="6"></a-video>
+
+      <!-- Left Wall -->
+      <a-video src="#leftVideo" position="-7 0 0" rotation="0 90 0" width="14" height="6"></a-video>
+
+      <!-- Right Wall -->
+      <a-video src="#rightVideo" position="7 0 0" rotation="0 -90 0" width="14" height="6"></a-video>
+
       <!-- Camera -->
-      <a-entity camera position="0 0 0" look-controls wasd-controls></a-entity>
+      <a-entity camera look-controls wasd-controls position="0 1.6 0"></a-entity>
     </a-scene>
   </body>
 </html>
