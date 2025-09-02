@@ -1,52 +1,40 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <title>Immersive Video Room</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-      }
-    </style>
+    <meta charset="utf-8">
+    <title>TiffyAI VR Portal</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   </head>
   <body>
-    <a-scene background="color: black" vr-mode-ui="enabled: true">
-      <!-- VIDEO ASSETS -->
+    <a-scene vr-mode-ui="enabled: true" embedded>
+      <!-- Assets -->
       <a-assets>
-        <video id="front" autoplay loop playsinline crossorigin="anonymous" src="front.mp4"></video>
-        <video id="back" autoplay loop playsinline crossorigin="anonymous" src="back.mp4"></video>
-        <video id="left" autoplay loop playsinline crossorigin="anonymous" src="left.mp4"></video>
-        <video id="right" autoplay loop playsinline crossorigin="anonymous" src="right.mp4"></video>
-        <video id="top" autoplay loop playsinline crossorigin="anonymous" src="top.mp4"></video>
-        <video id="bottom" autoplay loop playsinline crossorigin="anonymous" src="bottom.mp4"></video>
+        <video id="leftVid" src="left.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
+        <video id="rightVid" src="right.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
+        <video id="backVid" src="back.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
+        <video id="topVid" src="top.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
+        <video id="floorVid" src="floor.mp4" autoplay loop="true" crossorigin="anonymous" playsinline></video>
       </a-assets>
 
-      <!-- BIGGER, STRETCHED ROOM -->
-      <a-box id="room"
-        position="0 0 0"
-        depth="50"
-        height="25"
-        width="50"
-        material="side: back; shader: flat; src: #front">
-      </a-box>
+      <!-- Floor -->
+      <a-plane src="#floorVid" rotation="-90 0 0" width="40" height="40" position="0 0 0"></a-plane>
 
-      <!-- FRONT -->
-      <a-plane src="#front" rotation="0 0 0" width="50" height="25" position="0 0 -25"></a-plane>
-      <!-- BACK -->
-      <a-plane src="#back" rotation="0 180 0" width="60" height="25" position="0 0 25"></a-plane>
-      <!-- LEFT -->
-      <a-plane src="#left" rotation="0 90 0" width="50" height="25" position="-25 0 0"></a-plane>
-      <!-- RIGHT -->
-      <a-plane src="#right" rotation="0 -90 0" width="50" height="25" position="25 0 0"></a-plane>
-      <!-- TOP -->
-      <a-plane src="#top" rotation="-90 0 0" width="50" height="50" position="0 12.5 0"></a-plane>
-      <!-- BOTTOM -->
-      <a-plane src="#bottom" rotation="90 0 0" width="50" height="50" position="0 -12.5 0"></a-plane>
+      <!-- Left wall -->
+      <a-plane src="#leftVid" rotation="0 90 0" width="40" height="20" position="-20 10 0"></a-plane>
 
-      <!-- CAMERA -->
-      <a-entity camera look-controls position="0 0 0"></a-entity>
+      <!-- Right wall -->
+      <a-plane src="#rightVid" rotation="0 -90 0" width="40" height="20" position="20 10 0"></a-plane>
+
+      <!-- Back wall -->
+      <a-plane src="#backVid" rotation="0 180 0" width="40" height="20" position="0 10 -20"></a-plane>
+
+      <!-- Ceiling -->
+      <a-plane src="#topVid" rotation="90 0 0" width="40" height="40" position="0 20 0"></a-plane>
+
+      <!-- Camera -->
+      <a-entity position="0 2 10">
+        <a-camera wasd-controls-enabled="true" look-controls="true"></a-camera>
+      </a-entity>
     </a-scene>
   </body>
 </html>
