@@ -4,171 +4,179 @@
   <meta charset="UTF-8">
   <title>TiffyAI AR Shooter</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
   <style>
-    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:black; }
+    body, html {
+      margin:0; padding:0; height:100%; overflow:hidden; background:black;
+      font-family: monospace;
+    }
+    /* HUD */
     #hud {
       position:absolute; top:10px; left:50%; transform:translateX(-50%);
-      background: rgba(255,255,255,0.08);
-      border:1px solid rgba(255,255,255,0.25);
-      border-radius:12px; padding:10px 20px;
-      color:#00f0ff; font-size:18px; font-family: monospace;
-      backdrop-filter: blur(8px); box-shadow:0 0 20px rgba(0,255,255,0.4); z-index:9999;
+      background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25);
+      border-radius:12px; padding:10px 20px; color:#00f0ff; font-size:18px;
+      backdrop-filter: blur(8px); box-shadow:0 0 20px rgba(0,255,255,0.4);
+      z-index:9999;
+    }
+    .explosion {
+      animation: explode 0.6s ease-out forwards;
+    }
+    @keyframes explode {
+      0% { transform: scale(1); opacity:1; }
+      50% { transform: scale(1.6); opacity:0.8; }
+      100% { transform: scale(0); opacity:0; }
     }
   </style>
 </head>
 <body>
-<div id="hud">👾 Tap/click to shoot magic orbs!</div>
+  <div id="hud">👾 Tap to shoot magic orbs!</div>
 
-<a-scene>
-  <!-- Assets -->
-  <a-assets>
-    <!-- Environment -->
-    <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4"></video>
-    <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4"></video>
-    <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4"></video>
-    <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4"></video>
-    <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4"></video>
-    <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4"></video>
+  <a-scene background="color: black">
 
-    <!-- Game objects -->
-    <video id="orbVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/orb.mp4"></video>
-    <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
-  </a-assets>
+    <!-- Assets -->
+    <a-assets>
+      <video id="frontVideo" autoplay loop muted playsinline src="front.mp4"></video>
+      <video id="backVideo" autoplay loop muted playsinline src="back.mp4"></video>
+      <video id="leftVideo" autoplay loop muted playsinline src="left.mp4"></video>
+      <video id="rightVideo" autoplay loop muted playsinline src="right.mp4"></video>
+      <video id="topVideo" autoplay loop muted playsinline src="top.mp4"></video>
+      <video id="bottomVideo" autoplay loop muted playsinline src="bottom.mp4"></video>
 
-  <!-- Environment planes -->
-  <a-plane src="#frontVideo" position="0 1.6 -50" rotation="0 0 0" width="100" height="100"></a-plane>
-  <a-plane src="#backVideo" position="0 1.6 50" rotation="0 180 0" width="100" height="100"></a-plane>
-  <a-plane src="#leftVideo" position="-50 1.6 0" rotation="0 90 0" width="100" height="100"></a-plane>
-  <a-plane src="#rightVideo" position="50 1.6 0" rotation="0 -90 0" width="100" height="100"></a-plane>
-  <a-plane src="#topVideo" position="0 101.6 0" rotation="90 0 0" width="150" height="150"></a-plane>
-  <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
+      <video id="orbVideo" autoplay loop muted playsinline src="orb.webm"></video>
+      <video id="enemyVideo" autoplay loop muted playsinline src="enemies.webm"></video>
+    </a-assets>
 
-  <!-- Player camera -->
-  <a-entity id="player" camera look-controls position="0 1.6 0"></a-entity>
-</a-scene>
+    <!-- Environment planes -->
+    <a-plane src="#frontVideo" position="0 1.6 -50" rotation="0 0 0" width="100" height="100"></a-plane>
+    <a-plane src="#backVideo" position="0 1.6 50" rotation="0 180 0" width="100" height="100"></a-plane>
+    <a-plane src="#leftVideo" position="-50 1.6 0" rotation="0 90 0" width="100" height="100"></a-plane>
+    <a-plane src="#rightVideo" position="50 1.6 0" rotation="0 -90 0" width="100" height="100"></a-plane>
+    <a-plane src="#topVideo" position="0 101.6 0" rotation="90 0 0" width="150" height="150"></a-plane>
+    <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
+
+    <!-- Player camera -->
+    <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
+  </a-scene>
 
 <script>
-  const scene = document.querySelector('a-scene');
-  const orbVideo = document.querySelector('#orbVideo');
-  const enemyVideo = document.querySelector('#enemyVideo');
-  const orbs = [];
-  const enemies = [];
-
   // Play all videos
-  window.addEventListener('load', () => {
-    ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo','orbVideo','enemyVideo'].forEach(id => {
-      const vid = document.querySelector('#'+id);
-      vid.muted = true;
-      vid.play().catch(err => console.warn(`Autoplay blocked for ${id}:`, err));
+  window.addEventListener('load',()=>{
+    ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo','orbVideo','enemyVideo'].forEach(id=>{
+      const vid=document.getElementById(id);
+      vid.muted=true;
+      vid.play().catch(err=>console.warn(`Autoplay blocked for ${id}:`,err));
     });
   });
 
-  // Spawn enemy
-  function spawnEnemy(){
-    const x = Math.random()*40-20;
-    const z = Math.random()*40-20;
-    const y = 1.6 + Math.random()*2;
-    const enemy = document.createElement('a-video');
-    enemy.setAttribute('src','#enemyVideo');
-    enemy.setAttribute('width','4');
-    enemy.setAttribute('height','4');
-    enemy.setAttribute('position',`${x} ${y} ${-50}`);
-    enemy.setAttribute('transparent','true');
-    scene.appendChild(enemy);
-    enemies.push({el:enemy, speed:0.2 + Math.random()*0.3});
-  }
+  const enemies = [];
+  const orbs = [];
+  const scene = document.querySelector('a-scene');
+  const camera = document.getElementById('player');
 
-  // Shoot orb
+  // Shoot orb along camera direction
   function shootOrb(){
-    const orb = document.createElement('a-video');
-    orb.setAttribute('src','#orbVideo');
-    orb.setAttribute('width','1.2');
-    orb.setAttribute('height','1.2');
-    orb.setAttribute('position','0 1.6 -1.5');
-    orb.setAttribute('transparent','true');
+    const orbEl = document.createElement('a-video');
+    orbEl.setAttribute('src','#orbVideo');
+    orbEl.setAttribute('width','1');
+    orbEl.setAttribute('height','1');
+    orbEl.setAttribute('position',camera.getAttribute('position'));
+    orbEl.setAttribute('rotation','0 0 0');
+    orbEl.setAttribute('transparent','true');
+    scene.appendChild(orbEl);
 
     // Particle trail
-    orb.setAttribute('particle-system',{
+    const trail = document.createElement('a-entity');
+    trail.setAttribute('particle-system',{
       preset:'dust',
-      color:'#00ffff, #00ff88',
-      particleCount:50,
+      color:'#00ffff,#ffffff',
+      particleCount:30,
       size:0.1,
-      velocityValue:{x:0,y:0,z:0.1},
-      spread:{x:0.2,y:0.2,z:0.2}
+      velocityValue:'0 1 0',
+      duration:0.3
     });
+    orbEl.appendChild(trail);
 
-    scene.appendChild(orb);
-    orbs.push({el:orb, speed:0.5});
+    // Direction vector
+    const dir = new THREE.Vector3();
+    camera.object3D.getWorldDirection(dir);
+
+    orbs.push({el:orbEl, dir});
+  }
+
+  // Spawn enemies
+  function spawnEnemy(){
+    const enemy = document.createElement('a-video');
+    enemy.setAttribute('src','#enemyVideo');
+    enemy.setAttribute('width','1.5');
+    enemy.setAttribute('height','1.5');
+    enemy.setAttribute('transparent','true');
+
+    // Random side: 0=back,1=left,2=right
+    const side = Math.floor(Math.random()*3);
+    let pos = new THREE.Vector3();
+    if(side===0){ pos.set(Math.random()*20-10,1.6,30); }       // back
+    else if(side===1){ pos.set(-25,1.6,Math.random()*20-10); } // left
+    else { pos.set(25,1.6,Math.random()*20-10); }              // right
+
+    enemy.object3D.position.copy(pos);
+    scene.appendChild(enemy);
+    enemies.push({el:enemy, side, speed:0.2+Math.random()*0.2});
   }
 
   // Collision detection
-  function checkCollision(a,b){
-    const apos = a.getAttribute('position');
-    const bpos = b.getAttribute('position');
-    const dx = apos.x - bpos.x;
-    const dy = apos.y - bpos.y;
-    const dz = apos.z - bpos.z;
-    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
-    return distance < 2;
+  function isColliding(a,b){
+    const aPos=a.object3D.position;
+    const bPos=b.object3D.position;
+    const dist=aPos.distanceTo(bPos);
+    return dist<1;
   }
 
   // Game loop
   function gameLoop(){
-    // Move enemies
-    for(let i=enemies.length-1;i>=0;i--){
-      const e=enemies[i];
-      const pos = e.el.getAttribute('position');
-      pos.z += e.speed;
-      e.el.setAttribute('position', pos);
-      if(pos.z>5){ scene.removeChild(e.el); enemies.splice(i,1); }
-    }
+    // Move enemies towards player
+    enemies.forEach((e,i)=>{
+      const dir = new THREE.Vector3();
+      dir.subVectors(camera.object3D.position,e.el.object3D.position).normalize();
+      e.el.object3D.position.add(dir.multiplyScalar(e.speed));
+      // remove if close
+      if(e.el.object3D.position.distanceTo(camera.object3D.position)<0.5){
+        e.el.remove();
+        enemies.splice(i,1);
+      }
+    });
 
     // Move orbs
-    for(let j=orbs.length-1;j>=0;j--){
-      const o=orbs[j];
-      const pos=o.el.getAttribute('position');
-      pos.z -= o.speed;
-      o.el.setAttribute('position', pos);
-      // Remove if too far
-      if(pos.z<-60){ scene.removeChild(o.el); orbs.splice(j,1); }
-    }
-
-    // Check collisions
-    for(let i=enemies.length-1;i>=0;i--){
-      for(let j=orbs.length-1;j>=0;j--){
-        if(checkCollision(enemies[i].el, orbs[j].el)){
+    orbs.forEach((o,i)=>{
+      o.el.object3D.position.add(o.dir.clone().multiplyScalar(0.5));
+      // Check collisions with enemies
+      enemies.forEach((e,j)=>{
+        if(isColliding(o.el,e.el)){
+          // Explosion
           const explosion = document.createElement('a-sphere');
-          const pos = enemies[i].el.getAttribute('position');
-          explosion.setAttribute('position', pos);
-          explosion.setAttribute('radius',1.5);
+          explosion.setAttribute('position',e.el.getAttribute('position'));
+          explosion.setAttribute('radius',1);
           explosion.setAttribute('color','#00ffff');
-          explosion.setAttribute('opacity',0.8);
-          explosion.setAttribute('animation',{
-            property:'scale', to:'0 0 0', dur:600, easing:'easeOutQuad'
-          });
           scene.appendChild(explosion);
+          setTimeout(()=>explosion.remove(),300);
 
-          setTimeout(()=>{ scene.removeChild(explosion); },600);
-          scene.removeChild(enemies[i].el);
-          scene.removeChild(orbs[j].el);
-          enemies.splice(i,1);
-          orbs.splice(j,1);
-          break;
+          // Remove enemy and orb
+          e.el.remove();
+          enemies.splice(j,1);
+          o.el.remove();
+          orbs.splice(i,1);
         }
+      });
+      // remove if too far
+      if(o.el.object3D.position.distanceTo(camera.object3D.position)>50){
+        o.el.remove();
+        orbs.splice(i,1);
       }
-    }
+    });
 
     requestAnimationFrame(gameLoop);
   }
 
-  // Spawn enemies every 2s
+  window.addEventListener('click',shootOrb);
   setInterval(spawnEnemy,2000);
-
-  // Shoot on tap
-  window.addEventListener('click', shootOrb);
-
-  // Start loop
   gameLoop();
 </script>
 </body>
