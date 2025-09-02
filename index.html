@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tiffyverse FPS</title>
+  <title>Tiffyverse Hybrid Sky</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -10,37 +10,49 @@
 </head>
 <body>
   <a-scene>
-    <!-- Skybox -->
-    <a-sky id="skybox" material="shader: cube; src: #skyTextures"></a-sky>
-
     <!-- Player camera -->
-    <a-entity id="player" camera look-controls wasd-controls>
-    </a-entity>
+    <a-entity id="player" camera look-controls wasd-controls></a-entity>
 
     <!-- Ground -->
-    <a-plane rotation="-90 0 0" width="100" height="100" color="#222"></a-plane>
+    <a-plane src="assets/bottom.jpg" rotation="-90 0 0" width="100" height="100"></a-plane>
+
+    <!-- Skybox -->
+    <a-sky id="skybox"></a-sky>
+
+    <a-assets>
+      <video id="topVideo" autoplay loop="true" crossorigin="anonymous" playsinline>
+        <source src="assets/top.mp4" type="video/mp4">
+      </video>
+      <video id="frontVideo" autoplay loop="true" crossorigin="anonymous" playsinline>
+        <source src="assets/front.mp4" type="video/mp4">
+      </video>
+      <video id="backVideo" autoplay loop="true" crossorigin="anonymous" playsinline>
+        <source src="assets/back.mp4" type="video/mp4">
+      </video>
+      <img id="leftImg" src="assets/left.jpg">
+      <img id="rightImg" src="assets/right.jpg">
+    </a-assets>
+
+    <script>
+      const sky = document.querySelector('#skybox');
+
+      // Combine videos and images into a cube map
+      const loader = new THREE.CubeTextureLoader();
+      const cubeMat = loader.load([
+        document.querySelector('#rightImg').src,          // px
+        document.querySelector('#leftImg').src,           // nx
+        document.querySelector('#topVideo').currentSrc,   // py
+        document.querySelector('#topVideo').currentSrc,   // ny (reuse top)
+        document.querySelector('#frontVideo').currentSrc, // pz
+        document.querySelector('#backVideo').currentSrc   // nz
+      ]);
+
+      // Apply cube map to skybox
+      sky.object3D.material = new THREE.MeshBasicMaterial({
+        envMap: cubeMat,
+        side: THREE.BackSide
+      });
+    </script>
   </a-scene>
-
-  <a-assets>
-    <img id="px" src="assets/px.jpg">
-    <img id="nx" src="assets/nx.jpg">
-    <img id="py" src="assets/py.jpg">
-    <img id="ny" src="assets/ny.jpg">
-    <img id="pz" src="assets/pz.jpg">
-    <img id="nz" src="assets/nz.jpg">
-  </a-assets>
-
-  <script>
-    // Apply cube map to skybox
-    const sky = document.querySelector('#skybox');
-    sky.setAttribute('material', 'src', {
-      px: '#px',
-      nx: '#nx',
-      py: '#py',
-      ny: '#ny',
-      pz: '#pz',
-      nz: '#nz'
-    });
-  </script>
 </body>
 </html>
