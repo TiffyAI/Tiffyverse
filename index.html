@@ -9,9 +9,10 @@
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
   body, html { margin:0; padding:0; height:100%; overflow:hidden; background:black; font-family: 'Share Tech Mono', monospace; }
   #score {
-    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    position:absolute; bottom:10px; left:10px; /* Positioned at bottom-left */
     color:#00f0ff; font-size:16px; font-family: 'Share Tech Mono', monospace;
-    z-index:9999; background: rgba(0,0,0,0.2); padding:8px 15px; border-radius:10px;
+    z-index:10000; /* Higher z-index to be on top */
+    background: rgba(0,0,0,0.2); padding:8px 15px; border-radius:10px;
     backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
