@@ -4,65 +4,36 @@
   <meta charset="UTF-8">
   <title>TiffyAI AR Shooter</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/c-frame/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
   <style>
-    body, html {
-      margin: 0; padding: 0; height: 100%; overflow: hidden; background: black;
-      font-family: monospace;
-    }
-
-    /* Orbs */
-    .orb {
-      position: absolute; pointer-events: none; z-index: 5;
-      background: none;
-      width: auto; height: auto;
-    }
-
-    /* Enemies */
-    .enemy {
-      position: absolute; pointer-events: none;
-      background: none;
-      width: auto; height: auto;
-    }
-
-    /* Explosion animation */
-    @keyframes explode {
-      0%   { transform: scale(1); opacity: 1; }
-      50%  { transform: scale(1.6); opacity: 0.8; }
-      100% { transform: scale(0); opacity: 0; }
-    }
-    .explosion { animation: explode 0.6s ease-out forwards; }
-
-    /* Glow trail for orb */
-    .orb::after {
-      content: '';
-      position: absolute;
-      width: 100%; height: 100%;
-      top: 0; left: 0;
-      border-radius: 50%;
-      box-shadow: 0 0 20px 5px #00f0ff;
-      animation: trail 0.3s ease-out forwards;
-    }
-    @keyframes trail {
-      from { opacity: 1; transform: scale(1); }
-      to { opacity: 0; transform: scale(2); }
+    body, html { margin:0; padding:0; height:100%; overflow:hidden; background:black; }
+    #hud {
+      position:absolute; top:10px; left:50%; transform:translateX(-50%);
+      background: rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.25);
+      border-radius:12px; padding:10px 20px;
+      color:#00f0ff; font-size:18px; font-family: monospace;
+      backdrop-filter: blur(8px); box-shadow:0 0 20px rgba(0,255,255,0.4); z-index:9999;
     }
   </style>
 </head>
 <body>
+<div id="hud">👾 Tap/click to shoot magic orbs!</div>
 
-<a-scene embedded>
-
+<a-scene>
   <!-- Assets -->
   <a-assets>
-    <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous" src="front.mp4"></video>
-    <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous" src="back.mp4"></video>
-    <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous" src="left.mp4"></video>
-    <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous" src="right.mp4"></video>
-    <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous" src="top.mp4"></video>
-    <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous" src="bottom.mp4"></video>
+    <!-- Environment -->
+    <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4"></video>
+    <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4"></video>
+    <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4"></video>
+    <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4"></video>
+    <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4"></video>
+    <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4"></video>
 
-    <video id="orbVideo" autoplay loop muted playsinline crossorigin="anonymous" src="orb.mp4"></video>
-    <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous" src="enemies.mp4"></video>
+    <!-- Game objects -->
+    <video id="orbVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/orb.mp4"></video>
+    <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
   </a-assets>
 
   <!-- Environment planes -->
@@ -74,94 +45,116 @@
   <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
 
   <!-- Player camera -->
-  <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
-
+  <a-entity id="player" camera look-controls position="0 1.6 0"></a-entity>
 </a-scene>
 
 <script>
-  // Play all videos on mobile
+  const scene = document.querySelector('a-scene');
+  const orbVideo = document.querySelector('#orbVideo');
+  const enemyVideo = document.querySelector('#enemyVideo');
+  const orbs = [];
+  const enemies = [];
+
+  // Play all videos
   window.addEventListener('load', () => {
     ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo','orbVideo','enemyVideo'].forEach(id => {
-      const vid = document.getElementById(id);
+      const vid = document.querySelector('#'+id);
       vid.muted = true;
       vid.play().catch(err => console.warn(`Autoplay blocked for ${id}:`, err));
     });
   });
 
-  const enemies = [];
-  const orbs = [];
-
-  function spawnEnemy() {
-    const enemy = document.createElement("video");
-    enemy.src = "enemies.mp4";
-    enemy.autoplay = true; enemy.loop = true; enemy.muted = true;
-    enemy.className = "enemy";
-    enemy.style.width = "120px"; enemy.style.height = "120px";
-
-    // random back/left/right spawn
-    const side = Math.floor(Math.random()*3);
-    let x=0, y=0;
-    if(side===0){ x=window.innerWidth/2; y=-120; } // back
-    else if(side===1){ x=-50; y=Math.random()*window.innerHeight; } // left
-    else{ x=window.innerWidth+50; y=Math.random()*window.innerHeight; } // right
-
-    enemy.style.left = x+"px";
-    enemy.style.top = y+"px";
-
-    document.body.appendChild(enemy);
-    enemies.push({el:enemy,x,y,side,speed:2+Math.random()*2});
+  // Spawn enemy
+  function spawnEnemy(){
+    const x = Math.random()*40-20;
+    const z = Math.random()*40-20;
+    const y = 1.6 + Math.random()*2;
+    const enemy = document.createElement('a-video');
+    enemy.setAttribute('src','#enemyVideo');
+    enemy.setAttribute('width','4');
+    enemy.setAttribute('height','4');
+    enemy.setAttribute('position',`${x} ${y} ${-50}`);
+    enemy.setAttribute('transparent','true');
+    scene.appendChild(enemy);
+    enemies.push({el:enemy, speed:0.2 + Math.random()*0.3});
   }
 
-  function shootOrb() {
-    const orb = document.createElement("video");
-    orb.src = "orb.mp4";
-    orb.autoplay = true; orb.loop = true; orb.muted = true;
-    orb.className = "orb";
-    orb.style.width="60px"; orb.style.height="60px";
+  // Shoot orb
+  function shootOrb(){
+    const orb = document.createElement('a-video');
+    orb.setAttribute('src','#orbVideo');
+    orb.setAttribute('width','1.2');
+    orb.setAttribute('height','1.2');
+    orb.setAttribute('position','0 1.6 -1.5');
+    orb.setAttribute('transparent','true');
 
-    let x = window.innerWidth/2;
-    let y = window.innerHeight-150;
-    orb.style.left = x+"px";
-    orb.style.top = y+"px";
+    // Particle trail
+    orb.setAttribute('particle-system',{
+      preset:'dust',
+      color:'#00ffff, #00ff88',
+      particleCount:50,
+      size:0.1,
+      velocityValue:{x:0,y:0,z:0.1},
+      spread:{x:0.2,y:0.2,z:0.2}
+    });
 
-    document.body.appendChild(orb);
-    orbs.push({el:orb,x,y,speed:8});
+    scene.appendChild(orb);
+    orbs.push({el:orb, speed:0.5});
   }
 
-  function isColliding(a,b){
-    const aRect=a.getBoundingClientRect();
-    const bRect=b.getBoundingClientRect();
-    return !(aRect.top>bRect.bottom||aRect.bottom<bRect.top||aRect.left>bRect.right||aRect.right<bRect.left);
+  // Collision detection
+  function checkCollision(a,b){
+    const apos = a.getAttribute('position');
+    const bpos = b.getAttribute('position');
+    const dx = apos.x - bpos.x;
+    const dy = apos.y - bpos.y;
+    const dz = apos.z - bpos.z;
+    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+    return distance < 2;
   }
 
+  // Game loop
   function gameLoop(){
+    // Move enemies
     for(let i=enemies.length-1;i>=0;i--){
-      let e=enemies[i];
-      if(e.side===0) e.y+=e.speed;
-      else if(e.side===1) e.x+=e.speed;
-      else e.x-=e.speed;
-      e.el.style.left=e.x+"px"; e.el.style.top=e.y+"px";
-
-      if(e.y>window.innerHeight+100 || e.x<-200 || e.x>window.innerWidth+200){
-        e.el.remove(); enemies.splice(i,1);
-      }
+      const e=enemies[i];
+      const pos = e.el.getAttribute('position');
+      pos.z += e.speed;
+      e.el.setAttribute('position', pos);
+      if(pos.z>5){ scene.removeChild(e.el); enemies.splice(i,1); }
     }
 
+    // Move orbs
     for(let j=orbs.length-1;j>=0;j--){
-      let o=orbs[j];
-      o.y-=o.speed;
-      o.el.style.top=o.y+"px";
-
-      if(o.y<-100){ o.el.remove(); orbs.splice(j,1); }
+      const o=orbs[j];
+      const pos=o.el.getAttribute('position');
+      pos.z -= o.speed;
+      o.el.setAttribute('position', pos);
+      // Remove if too far
+      if(pos.z<-60){ scene.removeChild(o.el); orbs.splice(j,1); }
     }
 
+    // Check collisions
     for(let i=enemies.length-1;i>=0;i--){
       for(let j=orbs.length-1;j>=0;j--){
-        if(isColliding(enemies[i].el,orbs[j].el)){
-          enemies[i].el.classList.add("explosion");
-          setTimeout(()=>enemies[i].el.remove(),600);
-          orbs[j].el.remove();
-          enemies.splice(i,1); orbs.splice(j,1); break;
+        if(checkCollision(enemies[i].el, orbs[j].el)){
+          const explosion = document.createElement('a-sphere');
+          const pos = enemies[i].el.getAttribute('position');
+          explosion.setAttribute('position', pos);
+          explosion.setAttribute('radius',1.5);
+          explosion.setAttribute('color','#00ffff');
+          explosion.setAttribute('opacity',0.8);
+          explosion.setAttribute('animation',{
+            property:'scale', to:'0 0 0', dur:600, easing:'easeOutQuad'
+          });
+          scene.appendChild(explosion);
+
+          setTimeout(()=>{ scene.removeChild(explosion); },600);
+          scene.removeChild(enemies[i].el);
+          scene.removeChild(orbs[j].el);
+          enemies.splice(i,1);
+          orbs.splice(j,1);
+          break;
         }
       }
     }
@@ -169,8 +162,13 @@
     requestAnimationFrame(gameLoop);
   }
 
-  window.addEventListener("click", shootOrb);
+  // Spawn enemies every 2s
   setInterval(spawnEnemy,2000);
+
+  // Shoot on tap
+  window.addEventListener('click', shootOrb);
+
+  // Start loop
   gameLoop();
 </script>
 </body>
