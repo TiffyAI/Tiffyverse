@@ -10,6 +10,9 @@
 </head>
 <body>
   <a-scene>
+    <!-- Skybox -->
+    <a-sky id="skybox" material="shader: cube; src: #skyTextures"></a-sky>
+
     <!-- Player camera -->
     <a-entity id="player" camera look-controls wasd-controls>
     </a-entity>
@@ -17,5 +20,27 @@
     <!-- Ground -->
     <a-plane rotation="-90 0 0" width="100" height="100" color="#222"></a-plane>
   </a-scene>
+
+  <a-assets>
+    <img id="px" src="assets/px.jpg">
+    <img id="nx" src="assets/nx.jpg">
+    <img id="py" src="assets/py.jpg">
+    <img id="ny" src="assets/ny.jpg">
+    <img id="pz" src="assets/pz.jpg">
+    <img id="nz" src="assets/nz.jpg">
+  </a-assets>
+
+  <script>
+    // Apply cube map to skybox
+    const sky = document.querySelector('#skybox');
+    sky.setAttribute('material', 'src', {
+      px: '#px',
+      nx: '#nx',
+      py: '#py',
+      ny: '#ny',
+      pz: '#pz',
+      nz: '#nz'
+    });
+  </script>
 </body>
 </html>
