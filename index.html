@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>TiffyAI — Playground (blocks + magic)</title>
+    <title>TiffyAI — Playground (blocks + magical)</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
@@ -33,17 +33,9 @@
     <a-assets>
         <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous"
             src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4"></video>
-        <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4"></video>
         <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous"
             src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4"></video>
-        <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4"></video>
-        <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4"></video>
-        <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4"></video>
-        <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous"
+        <video id="enemiesVideo" autoplay loop muted playsinline crossorigin="anonymous"
             src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
 
         <audio id="shootSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
@@ -52,12 +44,8 @@
         <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
     </a-assets>
 
-    <a-plane src="#backVideo" position="0 0 -1000" rotation="0 0 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#frontVideo" position="0 0 1000" rotation="0 180 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#rightVideo" position="1000 0 0" rotation="0 -90 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#leftVideo" position="-1000 0 0" rotation="0 90 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#topVideo" position="0 1000 0" rotation="-90 0 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#bottomVideo" position="0 -1000 0" rotation="90 0 0" width="2000" height="2000"></a-plane>
+    <a-plane src="#frontVideo" position="0 0 -1000" rotation="0 0 0" width="2000" height="2000"></a-plane>
+    <a-plane src="#leftVideo" position="0 0 1000" rotation="0 180 0" width="2000" height="2000"></a-plane>
 
     <a-entity id="player" camera look-controls position="0 1.6 0">
         <a-entity id="cursor" cursor="fuse: false; rayOrigin: mouse"
@@ -65,7 +53,7 @@
                   geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03" 
                   material="color: #00ffff; shader: flat"
                   animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; loop: true; dur: 400"
-                  raycaster="objects: .enemy; far: 1000"></a-entity>
+                  raycaster="objects: .enemy; far: 2000"></a-entity>
     </a-entity>
     
     <a-entity id="effects-parent"></a-entity>
@@ -82,9 +70,8 @@ AFRAME.registerComponent('visual-shot', {
         const moveVector = this.data.direction.clone().multiplyScalar(this.data.speed * timeDelta / 1000);
         this.el.object3D.position.add(moveVector);
         
-        // Remove the visual shot if it gets too far away
         const cameraPos = document.getElementById('player').object3D.position;
-        if (this.el.object3D.position.distanceTo(cameraPos) > 1500) {
+        if (this.el.object3D.position.distanceTo(cameraPos) > 2000) {
             this.el.parentNode.removeChild(this.el);
         }
     }
@@ -100,7 +87,7 @@ const scoreBox = document.getElementById('scoreBox');
 window.globalEnemies = [];
 
 window.addEventListener('load', () => {
-    ['frontVideo','backVideo','leftVideo','topVideo','bottomVideo','enemyVideo', 'rightVideo'].forEach(id=>{
+    ['frontVideo','leftVideo','enemiesVideo'].forEach(id=>{
         const v = document.getElementById(id);
         if (v) { v.muted = true; v.play().catch(()=>{}); }
     });
@@ -132,48 +119,21 @@ function playSound(id, vol=1.0){
     }catch(e){}
 }
 
-/* ---------- Helper to spawn enemies in a wide area without stacking ---------- */
+/* ---------- Helper to spawn enemies on the foreground plane ---------- */
 function spawnEnemy() {
     const cube = document.createElement('a-box');
-    cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
+    cube.setAttribute('material', 'src: #enemiesVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
     cube.setAttribute('width', 4);
     cube.setAttribute('height', 4);
     cube.setAttribute('depth', 4);
     cube.setAttribute('class', 'enemy');
 
-    const minDist = 600;
-    const maxDist = 900;
-    const side = Math.floor(Math.random() * 4);
-    const pos = new THREE.Vector3();
+    // Spawn point is now on the foreground plane
+    const spawnZ = 980; 
+    const spawnX = (Math.random() * 800) - 400; // Random X in a wide range
+    const spawnY = (Math.random() * 400) - 200; // Random Y in a wide range
 
-    function randomPosForSide(s) {
-        for (let tries=0; tries<10; tries++){
-            let x=0,z=0;
-            if(s===0){
-                x = (Math.random()*400) - 200;
-                z = minDist + Math.random() * (maxDist - minDist);
-            } else if(s===1){
-                x = - (minDist + Math.random() * (maxDist - minDist));
-                z = (Math.random()*400) - 200;
-            } else if(s===2){
-                x = (minDist + Math.random() * (maxDist - minDist));
-                z = (Math.random()*400) - 200;
-            } else {
-                x = (Math.random()*400) - 200;
-                z = - (minDist + Math.random() * (maxDist - minDist));
-            }
-            const y = 2 + Math.random()*6;
-            let coll=false;
-            for(const e of window.globalEnemies){
-                const p = e.el.object3D.position;
-                if(p.distanceTo(new THREE.Vector3(x,y,z)) < 8){ coll=true; break; }
-            }
-            if(!coll) return new THREE.Vector3(x,y,z);
-        }
-        return new THREE.Vector3((Math.random()*400)-200, 2+Math.random()*6, (Math.random()*400)-200);
-    }
-
-    const posVec = randomPosForSide(side);
+    const posVec = new THREE.Vector3(spawnX, spawnY, spawnZ);
     cube.object3D.position.copy(posVec);
     cube.object3D.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
 
@@ -240,6 +200,7 @@ function createVisualShot() {
     visualShot.setAttribute('geometry', 'primitive: sphere; radius: 0.4');
     visualShot.setAttribute('material', 'shader: standard; emissive: #00ffff; emissiveIntensity: 2; metalness:0.05; roughness:0.2; transparent: true; opacity: 0.6');
     visualShot.setAttribute('visual-shot', 'direction', forward);
+    visualShot.object3D.position.copy(start);
 
     // Give it a magical particle trail
     const trail = document.createElement('a-entity');
@@ -275,7 +236,8 @@ function tick(now){
         e.el.object3D.rotation.x += (Math.random()-0.5) * e.rotSpeed;
         e.el.object3D.rotation.y += (Math.random()-0.5) * e.rotSpeed;
 
-        const target = new THREE.Vector3(0, 0, 0);
+        // Enemies now move towards the camera's position
+        const target = camera.object3D.position;
         const dir = new THREE.Vector3().subVectors(target, e.el.object3D.position).normalize();
         dir.x += (Math.random()-0.5)*0.02;
         dir.z += (Math.random()-0.5)*0.02;
@@ -293,17 +255,13 @@ function tick(now){
 
 /* ---------- Raycaster click listener ---------- */
 cursor.addEventListener('click', (e) => {
-    // Play the firing sound and create the visual shot effect
     playSound('shootSound', 0.9);
     createVisualShot();
 
-    // Check if we hit an enemy, and if so, execute the game logic
     const intersection = e.detail.intersection;
     if (intersection && intersection.object && intersection.object.el && intersection.object.el.classList.contains('enemy')) {
         const enemyEl = intersection.object.el;
         const enemyPos = enemyEl.object3D.position;
-
-        // Explosion and score logic
         explodeAt(enemyPos.clone());
         if (enemyEl.parentNode) enemyEl.parentNode.removeChild(enemyEl);
 
