@@ -14,7 +14,7 @@
     <!-- Player camera -->
     <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
 
-    <!-- Assets: 6 video sides -->
+    <!-- Assets: 6 MP4 videos -->
     <a-assets>
       <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous">
         <source src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4" type="video/mp4">
@@ -36,18 +36,18 @@
       </video>
     </a-assets>
 
-    <!-- Sky cube planes -->
-    <a-plane src="#frontVideo" position="0 50 -50" rotation="0 0 0" width="100" height="100"></a-plane>
-    <a-plane src="#backVideo" position="0 50 50" rotation="0 180 0" width="100" height="100"></a-plane>
-    <a-plane src="#leftVideo" position="-50 50 0" rotation="0 90 0" width="100" height="100"></a-plane>
-    <a-plane src="#rightVideo" position="50 50 0" rotation="0 -90 0" width="100" height="100"></a-plane>
-    <a-plane src="#topVideo" position="0 100 0" rotation="-90 0 0" width="100" height="100"></a-plane>
-    <a-plane src="#bottomVideo" position="0 0 0" rotation="-90 0 0" width="200" height="200"></a-plane>
+    <!-- Cube planes -->
+    <a-plane src="#frontVideo" position="0 1.6 -50" rotation="0 0 0" width="100" height="100"></a-plane>
+    <a-plane src="#backVideo" position="0 1.6 50" rotation="0 180 0" width="100" height="100"></a-plane>
+    <a-plane src="#leftVideo" position="-50 1.6 0" rotation="0 90 0" width="100" height="100"></a-plane>
+    <a-plane src="#rightVideo" position="50 1.6 0" rotation="0 -90 0" width="100" height="100"></a-plane>
+    <a-plane src="#topVideo" position="0 51.6 0" rotation="-90 0 0" width="100" height="100"></a-plane>
+    <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
 
   </a-scene>
 
   <script>
-    // Ensure all videos play on mobile
+    // Play all videos on mobile
     window.addEventListener('load', () => {
       ['frontVideo','backVideo','leftVideo','rightVideo','topVideo','bottomVideo'].forEach(id => {
         const vid = document.getElementById(id);
