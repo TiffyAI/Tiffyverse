@@ -1,292 +1,132 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>TiffyAI — Playground (blocks + magic)</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
-    
-    <style>
-        html,body { height:100%; margin:0; background:#000; font-family:monospace; }
-        #scoreBox {
-            position: absolute;
-            top: 8px;
-            left: 12px;
-            background: rgba(0,0,0,0.35);
-            color: #00f0ff;
-            padding: 8px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(0,255,255,0.12);
-            z-index: 9999;
-            font-size: 14px;
-            backdrop-filter: blur(6px);
-        }
-        a-scene { width:100vw; height:100vh; }
-    </style>
+<meta charset="UTF-8">
+<title>TiffyAI AR Block Shooter</title>
+<script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+<style>
+  body, html { margin:0; padding:0; height:100%; overflow:hidden; background:black; font-family: monospace; }
+  #score {
+    position:absolute; top:10px; left:50%; transform:translateX(-50%);
+    color:#00f0ff; font-size:20px; font-family: monospace;
+    z-index:9999; background: rgba(0,0,0,0.2); padding:8px 15px; border-radius:10px;
+  }
+</style>
 </head>
 <body>
+<div id="score">TIFFY Earnings: 0</div>
 
-<div id="scoreBox">TIFFY Earnings: 0.000000</div>
+<a-scene background="color:black" vr-mode-ui="enabled: true">
 
-<a-scene background="color: #000" embedded vr-mode-ui="enabled: true">
-
-    <a-assets>
-        <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4"></video>
-        <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4"></video>
-        <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4"></video>
-        <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4"></video>
-        <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4"></video>
-        <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4"></video>
-        <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous"
-            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
-
-        <audio id="shootSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
-        <audio id="explodeSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/blocks.wav"></audio>
-        <audio id="swoochSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
-        <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
-    </a-assets>
-
-    <a-plane src="#backVideo" position="0 0 -1000" rotation="0 0 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#frontVideo" position="0 0 1000" rotation="0 180 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#rightVideo" position="1000 0 0" rotation="0 -90 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#leftVideo" position="-1000 0 0" rotation="0 90 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#topVideo" position="0 1000 0" rotation="-90 0 0" width="2000" height="2000"></a-plane>
-    <a-plane src="#bottomVideo" position="0 -1000 0" rotation="90 0 0" width="2000" height="2000"></a-plane>
-
-    <a-entity id="player" camera look-controls position="0 1.6 0">
-        <a-entity id="cursor" cursor="fuse: false; rayOrigin: mouse"
-                  position="0 0 -1" 
-                  geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03" 
-                  material="color: #fff; shader: flat"
-                  raycaster="objects: .enemy; far: 1000"></a-entity>
-    </a-entity>
+  <!-- Assets -->
+  <a-assets>
+    <video id="frontVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4"></video>
+    <video id="backVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4"></video>
+    <video id="leftVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4"></video>
+    <video id="topVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4"></video>
+    <video id="bottomVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4"></video>
     
-    <a-entity id="effects-parent"></a-entity>
+    <video id="enemyVideo" autoplay loop muted playsinline src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
+
+    <!-- Sounds -->
+    <audio id="explodeSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/blocks.wav"></audio>
+    <audio id="enemySwooch" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
+    <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" autoplay loop></audio>
+  </a-assets>
+
+  <!-- Environment planes -->
+  <a-plane src="#frontVideo" position="0 1.6 -20" rotation="0 0 0" width="50" height="50"></a-plane>
+  <a-plane src="#backVideo" position="0 1.6 20" rotation="0 180 0" width="50" height="50"></a-plane>
+  <a-plane src="#leftVideo" position="-30 1.6 0" rotation="0 90 0" width="50" height="50"></a-plane>
+  <!-- Pyramid effect for right side (fake depth) -->
+  <a-plane src="#leftVideo" position="15 1.6 -15" rotation="0 -45 0" width="50" height="50"></a-plane>
+  <a-plane src="#leftVideo" position="15 1.6 15" rotation="0 -135 0" width="50" height="50"></a-plane>
+  <a-plane src="#topVideo" position="0 101.6 0" rotation="90 0 0" width="150" height="150"></a-plane>
+  <a-plane src="#bottomVideo" position="0 -48.4 0" rotation="-90 0 0" width="100" height="100"></a-plane>
+
+  <!-- Player camera close to front -->
+  <a-entity id="player" camera look-controls wasd-controls position="0 1.6 -5"></a-entity>
+
 </a-scene>
 
 <script>
-/* ---------- Game Globals ---------- */
-const scene = document.querySelector('a-scene');
-const camera = document.getElementById('player');
-const cursor = document.getElementById('cursor');
-const effectsParent = document.getElementById('effects-parent');
-const scoreBox = document.getElementById('scoreBox');
-
-window.globalEnemies = [];
-
-window.addEventListener('load', () => {
-    ['frontVideo','backVideo','leftVideo','topVideo','bottomVideo','enemyVideo', 'rightVideo'].forEach(id=>{
-        const v = document.getElementById(id);
-        if (v) { v.muted = true; v.play().catch(()=>{}); }
+  // Play videos and music
+  window.addEventListener('load',()=>{
+    ['frontVideo','backVideo','leftVideo','topVideo','bottomVideo','enemyVideo'].forEach(id=>{
+      const vid = document.getElementById(id); vid.muted=true; vid.play().catch(()=>{});
     });
-    const bg = document.getElementById('bgMusic');
-    if (bg) { bg.volume = 0.25; bg.loop = true; bg.play().catch(()=>{}); }
-});
+    const bg = document.getElementById('bgMusic'); bg.volume=0.3; bg.play().catch(()=>{});
+  });
 
-/* ---------- Game state ---------- */
-let spawnTimer = 0;
-const spawnInterval = 900;
-let lastTime = performance.now();
+  const scene = document.querySelector('a-scene');
+  const camera = document.getElementById('player');
+  const enemies = [];
+  let score = parseInt(localStorage.getItem('tetrusScore') || '0');
+  const scoreEl = document.getElementById('score');
+  scoreEl.textContent = `TIFFY Earnings: ${score}`;
 
-function getScore(){ return parseFloat(localStorage.getItem('tetrusScore') || '0'); }
-function addScore(value){
-    let s = getScore() + value;
-    s = Math.round(s * 1e6) / 1e6;
-    localStorage.setItem('tetrusScore', s.toString());
-    scoreBox.textContent = `TIFFY Earnings: ${s.toFixed(6)}`;
-}
-scoreBox.textContent = `TIFFY Earnings: ${getScore().toFixed(6)}`;
+  function spawnEnemy(){
+    const enemy = document.createElement('a-video');
+    enemy.setAttribute('src','#enemyVideo');
+    enemy.setAttribute('width','3');
+    enemy.setAttribute('height','3');
+    enemy.setAttribute('transparent','true');
 
-function playSound(id, vol=1.0){
-    const src = document.getElementById(id);
-    if(!src) return;
-    try{
-        const node = src.cloneNode();
-        node.volume = vol;
-        node.play().catch(()=>{});
-    }catch(e){}
-}
+    const side = Math.floor(Math.random()*2); // 0=back,1=left
+    let pos = new THREE.Vector3();
+    if(side===0){ pos.set(Math.random()*20-10,2,20); }       // back
+    else { pos.set(-20,2,Math.random()*20-10); }             // left
 
-/* ---------- Helper to spawn enemies in a wide area without stacking ---------- */
-function spawnEnemy() {
-    const cube = document.createElement('a-box');
-    cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
-    cube.setAttribute('width', 4);
-    cube.setAttribute('height', 4);
-    cube.setAttribute('depth', 4);
-    cube.setAttribute('class', 'enemy');
+    enemy.object3D.position.copy(pos);
+    scene.appendChild(enemy);
+    enemies.push({el:enemy,side,speed:0.15+Math.random()*0.15});
 
-    const minDist = 600;
-    const maxDist = 900;
-    const side = Math.floor(Math.random() * 4);
-    const pos = new THREE.Vector3();
+    // swooch sound
+    const swooch = document.getElementById('enemySwooch').cloneNode();
+    swooch.play();
+  }
 
-    function randomPosForSide(s) {
-        for (let tries=0; tries<10; tries++){
-            let x=0,z=0;
-            if(s===0){
-                x = (Math.random()*400) - 200;
-                z = minDist + Math.random() * (maxDist - minDist);
-            } else if(s===1){
-                x = - (minDist + Math.random() * (maxDist - minDist));
-                z = (Math.random()*400) - 200;
-            } else if(s===2){
-                x = (minDist + Math.random() * (maxDist - minDist));
-                z = (Math.random()*400) - 200;
-            } else {
-                x = (Math.random()*400) - 200;
-                z = - (minDist + Math.random() * (maxDist - minDist));
-            }
-            const y = 2 + Math.random()*6;
-            let coll=false;
-            for(const e of window.globalEnemies){
-                const p = e.el.object3D.position;
-                if(p.distanceTo(new THREE.Vector3(x,y,z)) < 8){ coll=true; break; }
-            }
-            if(!coll) return new THREE.Vector3(x,y,z);
-        }
-        return new THREE.Vector3((Math.random()*400)-200, 2+Math.random()*6, (Math.random()*400)-200);
-    }
+  function isColliding(a,b){
+    return a.object3D.position.distanceTo(b.object3D.position)<2;
+  }
 
-    const posVec = randomPosForSide(side);
-    cube.object3D.position.copy(posVec);
-    cube.object3D.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+  function gameLoop(){
+    enemies.forEach((e,i)=>{
+      // Rotate towards player
+      e.el.object3D.lookAt(camera.object3D.position);
+      // Move forward
+      const dir = new THREE.Vector3();
+      dir.subVectors(camera.object3D.position,e.el.object3D.position).normalize();
+      e.el.object3D.position.add(dir.multiplyScalar(e.speed));
 
-    scene.appendChild(cube);
+      if(e.el.object3D.position.distanceTo(camera.object3D.position)<1){
+        // Increment score
+        score += 1;
+        localStorage.setItem('tetrusScore',score);
+        scoreEl.textContent = `TIFFY Earnings: ${score}`;
 
-    const speed = 0.04 + Math.random()*0.12;
-    const rotSpeed = (Math.random()*2 - 1) * 0.02;
+        // Explosion
+        const explosion = document.createElement('a-box');
+        explosion.setAttribute('position',e.el.getAttribute('position'));
+        explosion.setAttribute('depth','2'); explosion.setAttribute('height','2'); explosion.setAttribute('width','2');
+        explosion.setAttribute('color','#00ffff');
+        scene.appendChild(explosion);
+        setTimeout(()=>explosion.remove(),300);
 
-    window.globalEnemies.push({ el: cube, speed, rotSpeed });
-    playSound('swoochSound', 0.45);
-}
+        const blockS = document.getElementById('explodeSound').cloneNode();
+        blockS.play();
 
-/* ---------- Explosion: particle burst + tiny fragments ---------- */
-function explodeAt(position){
-    const burst = document.createElement('a-entity');
-    burst.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
-    burst.setAttribute('particle-system', {
-        preset: 'snow',
-        particleCount: 400, 
-        color: '#ffdd99,#ffffff,#ff9933',
-        size: 0.07,
-        velocityValue: '1.2 1.6 1.2', 
-        spread: '1.5 1.5 1.5',
-        duration: 0.85,
-        blending: 2, 
+        e.el.remove();
+        enemies.splice(i,1);
+      }
     });
-    effectsParent.appendChild(burst);
-    setTimeout(()=>{ if(burst.parentNode) burst.parentNode.removeChild(burst); }, 1000);
 
-    for(let i=0;i<24;i++){ 
-        const piece = document.createElement('a-box');
-        piece.setAttribute('width','0.25'); piece.setAttribute('height','0.25'); piece.setAttribute('depth','0.25');
-        piece.setAttribute('material','color:#9a7f6c; metalness:0.1; roughness:0.8');
-        piece.object3D.position.copy(position);
-        effectsParent.appendChild(piece);
+    requestAnimationFrame(gameLoop);
+  }
 
-        const randDir = new THREE.Vector3((Math.random()*2-1),(Math.random()*1.4),(Math.random()*2-1)).normalize();
-        const travel = 1.2 + Math.random()*1.8;
-        const duration = 600 + Math.random()*500;
-        const start = performance.now();
-        const animatePiece = (t)=>{
-            const dt = (t - start) / duration;
-            if(dt >= 1){
-                if(piece.parentNode) piece.parentNode.removeChild(piece);
-                return;
-            }
-            piece.object3D.position.copy(position).add(randDir.clone().multiplyScalar(travel * dt));
-            piece.object3D.rotation.x += 0.3;
-            piece.object3D.rotation.y += 0.25;
-            requestAnimationFrame(animatePiece);
-        };
-        requestAnimationFrame(animatePiece);
-    }
-    playSound('explodeSound', 0.9);
-}
-
-/* ---------- Main loop ---------- */
-function tick(now){
-    const dt = now - lastTime;
-    lastTime = now;
-
-    spawnTimer += dt;
-    if(spawnTimer > spawnInterval){
-        spawnTimer = 0;
-        const toSpawn = 1 + (Math.random() < 0.15 ? 1 : 0);
-        for(let i=0;i<toSpawn;i++) spawnEnemy();
-    }
-
-    for(let i = window.globalEnemies.length-1; i >= 0; i--){
-        const e = window.globalEnemies[i];
-        e.el.object3D.rotation.x += (Math.random()-0.5) * e.rotSpeed;
-        e.el.object3D.rotation.y += (Math.random()-0.5) * e.rotSpeed;
-
-        const target = new THREE.Vector3(0, 0, 0);
-        const dir = new THREE.Vector3().subVectors(target, e.el.object3D.position).normalize();
-        dir.x += (Math.random()-0.5)*0.02;
-        dir.z += (Math.random()-0.5)*0.02;
-        e.el.object3D.position.add(dir.multiplyScalar(e.speed));
-
-        if(e.el.object3D.position.distanceTo(camera.object3D.position) < 1.2){
-            explodeAt(e.el.object3D.position.clone());
-            if(e.el.parentNode) e.el.parentNode.removeChild(e.el);
-            window.globalEnemies.splice(i,1);
-        }
-    }
-
-    requestAnimationFrame(tick);
-}
-
-/* ---------- Raycaster click listener ---------- */
-// This will now handle all shooting logic
-cursor.addEventListener('click', (e) => {
-    // The event detail contains the intersection information
-    const intersection = e.detail.intersection;
-    
-    // Check if the intersection object is one of our enemies
-    if (intersection && intersection.object && intersection.object.el && intersection.object.el.classList.contains('enemy')) {
-        const enemyEl = intersection.object.el;
-        const enemyPos = enemyEl.object3D.position;
-
-        // Visual "shot" effect
-        const hitEffect = document.createElement('a-entity');
-        hitEffect.setAttribute('position', `${intersection.point.x} ${intersection.point.y} ${intersection.point.z}`);
-        hitEffect.setAttribute('particle-system', {
-            preset: 'star',
-            particleCount: 20,
-            color: '#00ffff,#ffffff',
-            size: 0.2,
-            velocityValue: '0 0 0',
-            spread: '0.1 0.1 0.1',
-            duration: 0.2
-        });
-        effectsParent.appendChild(hitEffect);
-        setTimeout(()=>{ if(hitEffect.parentNode) hitEffect.parentNode.removeChild(hitEffect); }, 500);
-
-        // Explosion and score logic
-        explodeAt(enemyPos.clone());
-        if (enemyEl.parentNode) enemyEl.parentNode.removeChild(enemyEl);
-
-        const index = window.globalEnemies.findIndex(e => e.el === enemyEl);
-        if (index > -1) {
-            window.globalEnemies.splice(index, 1);
-        }
-        addScore(0.002);
-        playSound('shootSound', 0.9);
-    }
-});
-
-/* ---------- start loop ---------- */
-lastTime = performance.now();
-requestAnimationFrame(tick);
+  setInterval(spawnEnemy,2000);
+  gameLoop();
 </script>
+
 </body>
 </html>
