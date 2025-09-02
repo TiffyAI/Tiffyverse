@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>TiffyAI — Playground (blocks + magic)</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
+    
+    <style>
+        html,body { height:100%; margin:0; background:#000; font-family:monospace; }
+        #scoreBox {
+            position: absolute;
+            top: 8px;
+            left: 12px;
+            background: rgba(0,0,0,0.35);
+            color: #00f0ff;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,255,255,0.12);
+            z-index: 9999;
+            font-size: 14px;
+            backdrop-filter: blur(6px);
+        }
+        a-scene { width:100vw; height:100vh; }
+    </style>
+</head>
+<body>
+
+<div id="scoreBox">TIFFY Earnings: 0.000000</div>
+
+<a-scene background="color: #000" embedded vr-mode-ui="enabled: true">
+
+    <a-assets>
+        <video id="frontVideo" autoplay loop muted playsinline crossorigin="anonymous"
+            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/front.mp4"></video>
+        <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous"
+            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/back.mp4"></video>
+        <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous"
+            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/left.mp4"></video>
+        <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous"
+            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/right.mp4"></video>
+        <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous"
+            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/top.mp4"></video>
+        <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous"
+            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/bottom.mp4"></video>
+        <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous"
+            src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
+
+        <audio id="shootSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
+        <audio id="explodeSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/blocks.wav"></audio>
+        <audio id="swoochSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
+        <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
+    </a-assets>
+
+    <a-plane src="#backVideo" position="0 0 -1000" rotation="0 0 0" width="2000" height="2000"></a-plane>
+    <a-plane src="#frontVideo" position="0 0 1000" rotation="0 180 0" width="2000" height="2000"></a-plane>
+    <a-plane src="#rightVideo" position="1000 0 0" rotation="0 -90 0" width="2000" height="2000"></a-plane>
+    <a-plane src="#leftVideo" position="-1000 0 0" rotation="0 90 0" width="2000" height="2000"></a-plane>
+    <a-plane src="#topVideo" position="0 1000 0" rotation="-90 0 0" width="2000" height="2000"></a-plane>
+    <a-plane src="#bottomVideo" position="0 -1000 0" rotation="90 0 0" width="2000" height="2000"></a-plane>
+
+    <a-entity id="player" camera look-controls position="0 1.6 0">
+        <a-entity cursor="fuse: true; fuseTimeout: 500" 
+                  position="0 0 -1" 
+                  geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03" 
+                  material="color: #fff; shader: flat"
+                  raycaster="objects: .enemy"></a-entity>
+    </a-entity>
+    
+    <a-entity id="effects-parent"></a-entity>
+</a-scene>
+
+<script>
+/* ---------- Custom A-Frame Component for Projectile Movement ---------- */
+AFRAME.registerComponent('projectile-mover', {
+    schema: {
+        direction: {type: 'vec3'},
+        speed: {type: 'number', default: 1.5}
+    },
+    tick: function(time, timeDelta) {
+        const moveVector = this.data.direction.clone().multiplyScalar(this.data.speed * timeDelta / 1000);
+        this.el.object3D.position.add(moveVector);
+
+        // Color cycling
+        this.el.hueTick = (this.el.hueTick || 0) + 6 + Math.random() * 8;
+        const h = Math.floor(this.el.hueTick % 360);
+        this.el.setAttribute('material', `shader: standard; emissive: hsl(${h} 100% 60%); emissiveIntensity: 1.2; metalness:0.05; roughness:0.2`);
+
+        // Check for collision with enemies
+        const enemies = document.querySelectorAll('.enemy');
+        const projPos = this.el.object3D.position;
+        for (const enemyEl of enemies) {
+            const enemyPos = enemyEl.object3D.position;
+            if (projPos.distanceTo(enemyPos) < 2.6) {
+                // Collision detected! Explode and clean up.
+                explodeAt(enemyPos.clone());
+                enemyEl.parentNode.removeChild(enemyEl);
+                this.el.parentNode.removeChild(this.el);
+                addScore(0.002);
+                
+                // Remove from the global enemies array
+                const index = enemies.findIndex(e => e === enemyEl);
+                if (index > -1) {
+                    window.globalEnemies.splice(index, 1);
+                }
+                return; // Stop checking this projectile
+            }
+        }
+        
+        // Remove projectile if it gets too far away
+        const cameraPos = document.getElementById('player').object3D.position;
+        if (projPos.distanceTo(cameraPos) > 1500) {
+            this.el.parentNode.removeChild(this.el);
+        }
+    }
+});
+
+/* ---------- Game Globals ---------- */
+const scene = document.querySelector('a-scene');
+const camera = document.getElementById('player');
+const effectsParent = document.getElementById('effects-parent');
+const scoreBox = document.getElementById('scoreBox');
+
+window.globalEnemies = []; // Renamed from 'enemies' to 'globalEnemies' to avoid conflicts with component scope
+
+window.addEventListener('load', () => {
+    ['frontVideo','backVideo','leftVideo','topVideo','bottomVideo','enemyVideo', 'rightVideo'].forEach(id=>{
+        const v = document.getElementById(id);
+        if (v) { v.muted = true; v.play().catch(()=>{}); }
+    });
+    const bg = document.getElementById('bgMusic');
+    if (bg) { bg.volume = 0.25; bg.loop = true; bg.play().catch(()=>{}); }
+});
+
+/* ---------- Game state ---------- */
+let spawnTimer = 0;
+const spawnInterval = 900;
+let lastTime = performance.now();
+
+function getScore(){ return parseFloat(localStorage.getItem('tetrusScore') || '0'); }
+function addScore(value){
+    let s = getScore() + value;
+    s = Math.round(s * 1e6) / 1e6;
+    localStorage.setItem('tetrusScore', s.toString());
+    scoreBox.textContent = `TIFFY Earnings: ${s.toFixed(6)}`;
+}
+scoreBox.textContent = `TIFFY Earnings: ${getScore().toFixed(6)}`;
+
+function playSound(id, vol=1.0){
+    const src = document.getElementById(id);
+    if(!src) return;
+    try{
+        const node = src.cloneNode();
+        node.volume = vol;
+        node.play().catch(()=>{});
+    }catch(e){}
+}
+
+/* ---------- Helper to spawn enemies in a wide area without stacking ---------- */
+function spawnEnemy() {
+    const cube = document.createElement('a-box');
+    cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
+    cube.setAttribute('width', 4);
+    cube.setAttribute('height', 4);
+    cube.setAttribute('depth', 4);
+    cube.setAttribute('class', 'enemy');
+
+    // Adjusted spawn distances to match the new, larger environment
+    const minDist = 600;
+    const maxDist = 900;
+    const side = Math.floor(Math.random() * 4);
+    const pos = new THREE.Vector3();
+
+    function randomPosForSide(s) {
+        for (let tries=0; tries<10; tries++){
+            let x=0,z=0;
+            if(s===0){
+                x = (Math.random()*400) - 200;
+                z = minDist + Math.random() * (maxDist - minDist);
+            } else if(s===1){
+                x = - (minDist + Math.random() * (maxDist - minDist));
+                z = (Math.random()*400) - 200;
+            } else if(s===2){
+                x = (minDist + Math.random() * (maxDist - minDist));
+                z = (Math.random()*400) - 200;
+            } else {
+                x = (Math.random()*400) - 200;
+                z = - (minDist + Math.random() * (maxDist - minDist));
+            }
+            const y = 2 + Math.random()*6;
+            let coll=false;
+            for(const e of window.globalEnemies){
+                const p = e.el.object3D.position;
+                if(p.distanceTo(new THREE.Vector3(x,y,z)) < 8){ coll=true; break; }
+            }
+            if(!coll) return new THREE.Vector3(x,y,z);
+        }
+        return new THREE.Vector3((Math.random()*400)-200, 2+Math.random()*6, (Math.random()*400)-200);
+    }
+
+    const posVec = randomPosForSide(side);
+    cube.object3D.position.copy(posVec);
+    cube.object3D.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+
+    scene.appendChild(cube);
+
+    const speed = 0.04 + Math.random()*0.12;
+    const rotSpeed = (Math.random()*2 - 1) * 0.02;
+
+    window.globalEnemies.push({ el: cube, speed, rotSpeed });
+    playSound('swoochSound', 0.45);
+}
+
+/* ---------- Shooting: glowing spheres with trailing particle system ---------- */
+function shootProjectile(){
+    const sphere = document.createElement('a-entity');
+    // Increased radius and emissive intensity for visibility
+    sphere.setAttribute('geometry', 'primitive: sphere; radius: 0.4');
+    sphere.setAttribute('material', 'shader: standard; emissive: #00ffff; emissiveIntensity: 2; metalness:0.05; roughness:0.2');
+    
+    const start = camera.object3D.getWorldPosition(new THREE.Vector3());
+    const forward = new THREE.Vector3();
+    camera.object3D.getWorldDirection(forward);
+    
+    const spawnPos = start.clone().add(forward.clone().multiplyScalar(1.3));
+    sphere.object3D.position.copy(spawnPos);
+    
+    // Add our new custom component to handle movement and logic
+    sphere.setAttribute('projectile-mover', {
+        direction: forward,
+        speed: 100 // A-Frame component speed is in meters/second
+    });
+
+    const trail = document.createElement('a-entity');
+    trail.setAttribute('particle-system', {
+        preset: 'dust',
+        particleCount: 200, 
+        color: '#00ffff,#88ffcc,#ffffff',
+        size: 0.15,
+        velocityValue: '0 0 0',
+        spread: '0.22 0.22 0.22',
+        duration: 0.6,
+        blending: 2,
+    });
+    sphere.appendChild(trail);
+    effectsParent.appendChild(sphere);
+    playSound('shootSound', 0.9);
+}
+
+/* ---------- Explosion: particle burst + tiny fragments ---------- */
+function explodeAt(position){
+    const burst = document.createElement('a-entity');
+    burst.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+    burst.setAttribute('particle-system', {
+        preset: 'snow',
+        particleCount: 400, 
+        color: '#ffdd99,#ffffff,#ff9933',
+        size: 0.07,
+        velocityValue: '1.2 1.6 1.2', 
+        spread: '1.5 1.5 1.5',
+        duration: 0.85,
+        blending: 2, 
+    });
+    effectsParent.appendChild(burst);
+    setTimeout(()=>{ if(burst.parentNode) burst.parentNode.removeChild(burst); }, 1000);
+
+    for(let i=0;i<24;i++){ 
+        const piece = document.createElement('a-box');
+        piece.setAttribute('width','0.25'); piece.setAttribute('height','0.25'); piece.setAttribute('depth','0.25');
+        piece.setAttribute('material','color:#9a7f6c; metalness:0.1; roughness:0.8');
+        piece.object3D.position.copy(position);
+        effectsParent.appendChild(piece);
+
+        const randDir = new THREE.Vector3((Math.random()*2-1),(Math.random()*1.4),(Math.random()*2-1)).normalize();
+        const travel = 1.2 + Math.random()*1.8;
+        const duration = 600 + Math.random()*500;
+        const start = performance.now();
+        const animatePiece = (t)=>{
+            const dt = (t - start) / duration;
+            if(dt >= 1){
+                if(piece.parentNode) piece.parentNode.removeChild(piece);
+                return;
+            }
+            piece.object3D.position.copy(position).add(randDir.clone().multiplyScalar(travel * dt));
+            piece.object3D.rotation.x += 0.3;
+            piece.object3D.rotation.y += 0.25;
+            requestAnimationFrame(animatePiece);
+        };
+        requestAnimationFrame(animatePiece);
+    }
+    playSound('explodeSound', 0.9);
+}
+
+/* ---------- Main loop ---------- */
+function tick(now){
+    const dt = now - lastTime;
+    lastTime = now;
+
+    spawnTimer += dt;
+    if(spawnTimer > spawnInterval){
+        spawnTimer = 0;
+        const toSpawn = 1 + (Math.random() < 0.15 ? 1 : 0);
+        for(let i=0;i<toSpawn;i++) spawnEnemy();
+    }
+
+    for(let i = window.globalEnemies.length-1; i >= 0; i--){
+        const e = window.globalEnemies[i];
+        e.el.object3D.rotation.x += (Math.random()-0.5) * e.rotSpeed;
+        e.el.object3D.rotation.y += (Math.random()-0.5) * e.rotSpeed;
+
+        const target = new THREE.Vector3(0, 0, 0);
+        const dir = new THREE.Vector3().subVectors(target, e.el.object3D.position).normalize();
+        dir.x += (Math.random()-0.5)*0.02;
+        dir.z += (Math.random()-0.5)*0.02;
+        e.el.object3D.position.add(dir.multiplyScalar(e.speed));
+
+        if(e.el.object3D.position.distanceTo(camera.object3D.position) < 1.2){
+            explodeAt(e.el.object3D.position.clone());
+            if(e.el.parentNode) e.el.parentNode.removeChild(e.el);
+            window.globalEnemies.splice(i,1);
+        }
+    }
+    // The projectile loop is now handled by the 'projectile-mover' component
+    // So we can remove the old projectile update logic from this tick() function.
+
+    requestAnimationFrame(tick);
+}
+
+/* ---------- Input (shoot on tap/click) ---------- */
+window.addEventListener('click', (e)=>{
+    shootProjectile();
+});
+
+/* ---------- start loop ---------- */
+lastTime = performance.now();
+requestAnimationFrame(tick);
+
+</script>
+</body>
+</html>
