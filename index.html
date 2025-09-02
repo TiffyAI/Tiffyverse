@@ -10,7 +10,7 @@
       background: black;
     }
 
-    /* Background videos */
+    /* Background videos stacked */
     video.bg {
       position: absolute;
       top: 0;
@@ -39,14 +39,15 @@
       transform: translate(-50%, -50%);
       pointer-events: none;
       z-index: 5;
+      filter: drop-shadow(0 0 15px #00f0ff) drop-shadow(0 0 20px #00f0ff);
     }
 
-    /* Fire trail */
+    /* Magic trail for orbs */
     .trail {
       position: absolute;
       width: 40px;
       height: 40px;
-      background: radial-gradient(circle, rgba(0,200,255,0.8) 0%, rgba(0,200,255,0) 70%);
+      background: radial-gradient(circle, rgba(0,255,255,0.8) 0%, rgba(0,255,255,0) 70%);
       border-radius: 50%;
       pointer-events: none;
       z-index: 4;
@@ -67,24 +68,6 @@
     .explosion {
       animation: explode 0.6s ease-out forwards;
     }
-
-    /* Glass HUD overlay (TiffyAI style) */
-    #hud {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      padding: 10px 20px;
-      color: #00f0ff;
-      font-family: monospace;
-      font-size: 18px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 0 20px rgba(0,255,255,0.4);
-      z-index: 10;
-    }
   </style>
 </head>
 <body>
@@ -95,9 +78,6 @@
   <video id="right" class="bg" autoplay muted loop src="right.mp4"></video>
   <video id="top" class="bg" autoplay muted loop src="top.mp4"></video>
   <video id="bottom" class="bg" autoplay muted loop src="bottom.mp4"></video>
-
-  <!-- HUD -->
-  <div id="hud">👾 Tap anywhere to shoot magic orbs!</div>
 
   <script>
     const enemies = [];
@@ -112,19 +92,19 @@
       enemy.muted = true;
       enemy.className = "enemy";
 
-      // Start from back/left/right randomly
+      // Choose random side
       const sides = ['back', 'left', 'right'];
       const side = sides[Math.floor(Math.random() * sides.length)];
       let startX, startY;
 
       if(side === 'back') {
         startX = Math.random() * window.innerWidth;
-        startY = -150;
+        startY = -200;
       } else if(side === 'left') {
-        startX = -150;
+        startX = -200;
         startY = Math.random() * window.innerHeight;
       } else {
-        startX = window.innerWidth + 150;
+        startX = window.innerWidth + 200;
         startY = Math.random() * window.innerHeight;
       }
 
@@ -145,8 +125,8 @@
       orb.muted = true;
       orb.className = "orb";
 
-      let startX = window.innerWidth / 2;
-      let startY = window.innerHeight - 150;
+      const startX = window.innerWidth / 2;
+      const startY = window.innerHeight - 150;
 
       orb.style.left = `${startX}px`;
       orb.style.top = `${startY}px`;
@@ -156,7 +136,7 @@
       orbs.push({ el: orb, x: startX, y: startY, speed: 12 });
     }
 
-    // Fire trail for orb
+    // Create magic trail for orb
     function createTrail(x, y) {
       const trail = document.createElement("div");
       trail.className = "trail";
@@ -190,7 +170,6 @@
         e.el.style.top = `${e.y}px`;
         e.el.style.left = `${e.x}px`;
 
-        // Remove if offscreen
         if(e.x < -250 || e.x > window.innerWidth+250 || e.y > window.innerHeight+250) {
           e.el.remove();
           enemies.splice(i,1);
@@ -203,7 +182,6 @@
         o.y -= o.speed;
         o.el.style.top = `${o.y}px`;
 
-        // Fire trail
         createTrail(o.x, o.y+40);
 
         if(o.y < -100) {
@@ -231,14 +209,23 @@
       requestAnimationFrame(gameLoop);
     }
 
-    // Tap to shoot
+    // Tap anywhere to shoot
     window.addEventListener("click", shootOrb);
 
-    // Spawn enemies every 2s
+    // Spawn enemies every 2 seconds
     setInterval(spawnEnemy, 2000);
 
-    // Start loop
+    // Start game loop
     gameLoop();
+
+    // Ensure videos play on mobile
+    window.addEventListener('load', () => {
+      ['front','back','left','right','top','bottom'].forEach(id => {
+        const vid = document.getElementById(id);
+        vid.muted = true;
+        vid.play().catch(err => console.warn(`Autoplay blocked for ${id}:`, err));
+      });
+    });
   </script>
 </body>
 </html>
