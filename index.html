@@ -5,146 +5,140 @@
 <title>Blockchain Storm AR-VR</title>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
+<script src="https://cdn.jsdelivr.com/gh/IdeaSpaceVR/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-  html,body{height:100%;margin:0;background:#000;font-family:'Share Tech Mono',monospace;overflow:hidden;}
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+  html,body{height:100%;margin:0;background:#000;font-family:'Share Tech Mono',monospace;overflow:hidden;}
 
-  /* Bottom HUD & handle */
-  #hud-handle{
-    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-    width:56px;height:18px;border-radius:12px 12px 0 0;
-    background:rgba(0,240,255,0.7);cursor:pointer;z-index:10001;
-    box-shadow:0 0 8px rgba(0,240,255,0.9);
-  }
-  #hud-strip{
-    position:fixed;bottom:-82px;left:50%;transform:translateX(-50%);
-    width:92%;max-width:520px;padding:8px 12px;border-radius:16px 16px 0 0;
-    display:flex;gap:8px;align-items:center;justify-content:space-around;
-    background:rgba(20,20,30,0.55);backdrop-filter:blur(12px);
-    border:1px solid rgba(0,240,255,0.35);box-shadow:0 0 12px rgba(0,240,255,0.45);
-    transition:bottom .35s ease;z-index:10000;
-  }
-  .hud-btn{
-    display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;
-    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.22);
-    color:#00f0ff;font-size:14px;cursor:pointer;backdrop-filter:blur(6px);
-    transition:transform .18s ease,background .18s ease,border-color .18s ease;
-    user-select:none;
-  }
-  .hud-btn:hover{background:rgba(0,240,255,0.15);transform:translateY(-1px) scale(1.03);border-color:rgba(0,240,255,0.45);}
-  .hud-btn:active{transform:scale(.98);}
+  /* Bottom HUD & handle */
+  #hud-handle{
+    position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+    width:56px;height:18px;border-radius:12px 12px 0 0;
+    background:rgba(0,240,255,0.7);cursor:pointer;z-index:10001;
+    box-shadow:0 0 8px rgba(0,240,255,0.9);
+  }
+  #hud-strip{
+    position:fixed;bottom:-82px;left:50%;transform:translateX(-50%);
+    width:92%;max-width:520px;padding:8px 12px;border-radius:16px 16px 0 0;
+    display:flex;gap:8px;align-items:center;justify-content:space-around;
+    background:rgba(20,20,30,0.55);backdrop-filter:blur(12px);
+    border:1px solid rgba(0,240,255,0.35);box-shadow:0 0 12px rgba(0,240,255,0.45);
+    transition:bottom .35s ease;z-index:10000;
+  }
+  .hud-btn{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.22);
+    color:#00f0ff;font-size:14px;cursor:pointer;backdrop-filter:blur(6px);
+    transition:transform .18s ease,background .18s ease,border-color .18s ease;
+    user-select:none;
+  }
+  .hud-btn:hover{background:rgba(0,240,255,0.15);transform:translateY(-1px) scale(1.03);border-color:rgba(0,240,255,0.45);}
+  .hud-btn:active{transform:scale(.98);}
 
-  #balance{
-    display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;
-    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);
-    color:#00f0ff;font-size:14px;
-  }
-  #balance img{height:20px;filter:drop-shadow(0 0 5px rgba(0,240,255,0.8));}
+  #balance{
+    display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);
+    color:#00f0ff;font-size:14px;
+  }
+  #balance img{height:20px;filter:drop-shadow(0 0 5px rgba(0,240,255,0.8));}
 
-  /* Challenge bar */
-  #challenge{
-    position:fixed;bottom:92px;left:50%;transform:translateX(-50%);
-    width:92%;max-width:520px;background:rgba(20,20,30,0.5);border-radius:12px;
-    padding:8px 10px;border:1px solid rgba(0,240,255,0.35);box-shadow:0 0 10px rgba(0,240,255,0.35);
-    font-family:'Share Tech Mono',monospace;color:#00f0ff;font-size:13px;z-index:10000;
-    backdrop-filter:blur(8px);
-  }
-  #challenge-bar{width:100%;height:12px;background:rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;margin-top:6px;}
-  #challenge-fill{height:100%;width:0%;background:linear-gradient(90deg,#00f0ff,#00ff99);transition:width .35s ease;}
+  /* Challenge bar */
+  #challenge{
+    position:fixed;bottom:92px;left:50%;transform:translateX(-50%);
+    width:92%;max-width:520px;background:rgba(20,20,30,0.5);border-radius:12px;
+    padding:8px 10px;border:1px solid rgba(0,240,255,0.35);box-shadow:0 0 10px rgba(0,240,255,0.35);
+    font-family:'Share Tech Mono',monospace;color:#00f0ff;font-size:13px;z-index:10000;
+    backdrop-filter:blur(8px);
+  }
+  #challenge-bar{width:100%;height:12px;background:rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;margin-top:6px;}
+  #challenge-fill{height:100%;width:0%;background:linear-gradient(90deg,#00f0ff,#00ff99);transition:width .35s ease;}
 
-  #online{margin-top:8px;font-size:12px;opacity:.9;}
+  #online{margin-top:8px;font-size:12px;opacity:.9;}
 
-  /* Popup */
-  #congrats{
-    display:none;position:fixed;inset:0;background:rgba(3,6,15,0.94);z-index:20000;
-    align-items:center;justify-content:center;padding:20px;color:#00f0ff;font-family:'Share Tech Mono',monospace;
-  }
-  #congrats .card{
-    background:rgba(0,0,0,0.7);border:2px solid #00f0ff;border-radius:16px;padding:20px;
-    box-shadow:0 0 20px #00f0ff;text-align:center;max-width:92%;
-  }
-  #congrats h1{font-size:22px;margin:0 0 8px;color:#00ffcc;}
-  #congrats p{margin:6px 0;font-size:15px;}
-  #congrats b{color:#fff;}
-  /* make sure UI clickable */
-  #hud-strip,#hud-handle,#congrats{pointer-events:auto;}
+  /* Popup */
+  #congrats{
+    display:none;position:fixed;inset:0;background:rgba(3,6,15,0.94);z-index:20000;
+    align-items:center;justify-content:center;padding:20px;color:#00f0ff;font-family:'Share Tech Mono',monospace;
+  }
+  #congrats .card{
+    background:rgba(0,0,0,0.7);border:2px solid #00f0ff;border-radius:16px;padding:20px;
+    box-shadow:0 0 20px #00f0ff;text-align:center;max-width:92%;
+  }
+  #congrats h1{font-size:22px;margin:0 0 8px;color:#00ffcc;}
+  #congrats p{margin:6px 0;font-size:15px;}
+  #congrats b{color:#fff;}
+  /* make sure UI clickable */
+  #hud-strip,#hud-handle,#congrats{pointer-events:auto;}
 </style>
 </head>
 <body>
 
-<!-- A-Frame Scene -->
 <a-scene vr-mode-ui="enabled: true">
-  <a-assets>
-    <!-- videos -->
-    <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/right.mp4"></video>
-    <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/top.mp4"></video>
-    <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/left.mp4"></video>
-    <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/bottom.mp4"></video>
-    <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/back.mp4"></video>
-    <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
+  <a-assets>
+        <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/right.mp4"></video>
+    <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/top.mp4"></video>
+    <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/left.mp4"></video>
+    <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/bottom.mp4"></video>
+    <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/back.mp4"></video>
+    <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
 
-    <!-- sounds -->
-    <audio id="shootSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
-    <audio id="explodeSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/blocks.wav"></audio>
-    <audio id="swoochSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
-    <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
-    <audio id="clickSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/click.wav"></audio>
-  </a-assets>
+        <audio id="shootSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
+    <audio id="explodeSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/blocks.wav"></audio>
+    <audio id="swoochSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
+    <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
+    <audio id="clickSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/click.wav"></audio>
+  </a-assets>
 
-  <a-sky id="sky" src="#rightVideo"></a-sky>
+  <a-sky id="sky" src="#rightVideo"></a-sky>
 
-  <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
+  <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
 
-  <a-entity id="cursor" cursor="fuse:false; rayOrigin: mouse"
-            position="0 0 -1"
-            geometry="primitive:ring; radiusInner:0.02; radiusOuter:0.03"
-            material="color: #00ffff; shader: flat"
-            animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; loop: true; dur: 400"
-            raycaster="objects: .enemy; far: 200"></a-entity>
+  <a-entity id="cursor" cursor="fuse:false; rayOrigin: mouse"
+            position="0 0 -1"
+            geometry="primitive:ring; radiusInner:0.02; radiusOuter:0.03"
+            material="color: #00ffff; shader: flat"
+            animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; loop: true; dur: 400"
+            raycaster="objects: .enemy; far: 200"></a-entity>
 
-  <a-entity id="effects-parent"></a-entity>
+  <a-entity id="effects-parent"></a-entity>
 </a-scene>
 
-<!-- HUD -->
 <div id="hud-handle" title="Open controls"></div>
 <div id="hud-strip">
-  <div id="balance"><img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TIFFY">0.000000</div>
-  <div class="hud-btn" id="btn-ar">🌐 AR</div>
-  <div class="hud-btn" id="btn-vr">🕶️ VR</div>
-  <div class="hud-btn" id="btn-withdraw">💸 Withdraw</div>
+  <div id="balance"><img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TIFFY">0.000000</div>
+  <div class="hud-btn" id="btn-ar">🌐 AR</div>
+  <div class="hud-btn" id="btn-vr">🕶️ VR</div>
+  <div class="hud-btn" id="btn-withdraw">💸 Withdraw</div>
 </div>
 
-<!-- Challenge bar -->
 <div id="challenge">
-  <div id="challenge-label">Storm Challenge (50 TIFFY)</div>
-  <div id="challenge-bar"><div id="challenge-fill"></div></div>
-  <div id="online">🌍 0 players online</div>
+  <div id="challenge-label">Storm Challenge (50 TIFFY)</div>
+  <div id="challenge-bar"><div id="challenge-fill"></div></div>
+  <div id="online">🌍 0 players online</div>
 </div>
 
-<!-- Popup overlay -->
 <div id="congrats">
-  <div class="card">
-    <h1>🚀 Spectacular Congratulations! 🚀</h1>
-    <p>Withdraw Now & Enter the 7 Day Challenge!</p>
-    <p>WIN an additional <b>100 TIFFY Tokens</b>.</p>
-    <p>The first 10 players get 100 TIFFY and the winner takes <b>200 scarce TIFFY gems</b>.</p>
-    <p id="timestamp"></p>
-  </div>
+  <div class="card">
+    <h1>🚀 Spectacular Congratulations! 🚀</h1>
+    <p>Withdraw Now & Enter the 7 Day Challenge!</p>
+    <p>WIN an additional <b>100 TIFFY Tokens</b>.</p>
+    <p>The first 10 players get 100 TIFFY and the winner takes <b>200 scarce TIFFY gems</b>.</p>
+    <p id="timestamp"></p>
+  </div>
 </div>
 
 <script>
 /* ---------- Components & Globals ---------- */
 AFRAME.registerComponent('visual-shot', {
-  schema: { direction: {type:'vec3'}, speed: {type:'number', default:150} },
-  tick: function (time, dt) {
-    const mv = this.data.direction.clone().multiplyScalar(this.data.speed * dt / 1000);
-    this.el.object3D.position.add(mv);
-    const cam = document.getElementById('player').object3D.position;
-    if (this.el.object3D.position.distanceTo(cam) > 200) {
-      this.el.parentNode && this.el.parentNode.removeChild(this.el);
-    }
-  }
+  schema: { direction: {type:'vec3'}, speed: {type:'number', default:150} },
+  tick: function (time, dt) {
+    const mv = this.data.direction.clone().multiplyScalar(this.data.speed * dt / 1000);
+    this.el.object3D.position.add(mv);
+    const cam = document.getElementById('player').object3D.position;
+    if (this.el.object3D.position.distanceTo(cam) > 200) {
+      this.el.parentNode && this.el.parentNode.removeChild(this.el);
+    }
+  }
 });
 
 const scene = document.querySelector('a-scene');
@@ -163,281 +157,286 @@ const timestampEl = document.getElementById('timestamp');
 const withdrawBtn = document.getElementById('btn-withdraw');
 
 let hudOpen = false;
-let thresholdReached = false;
+
+// The game's progress bar is now separate from the total score
+const PROGRESS_THRESHOLD_TIFFY = 50; // The threshold to fill the bar
+let cubesDestroyedInSession = 0;
 
 /* Score synchronized to tetrusScore */
 let score = parseFloat(localStorage.getItem('tetrusScore') || '0');
 
 /* Helper: play sound clone */
 function playSound(id, vol=1.0){
-  const src = document.getElementById(id);
-  if(!src) return;
-  try{
-    const n = src.cloneNode(true);
-    n.volume = vol;
-    n.play().catch(()=>{});
-  }catch(e){}
+  const src = document.getElementById(id);
+  if(!src) return;
+  try{
+    const n = src.cloneNode(true);
+    n.volume = vol;
+    n.play().catch(()=>{});
+  }catch(e){}
 }
 
 /* Update HUD balance & challenge visuals */
 function renderBalance(){
-  balanceEl.innerHTML = `<img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TIFFY">${score.toFixed(6)}`;
+  balanceEl.innerHTML = `<img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TIFFY">${score.toFixed(6)}`;
 }
+
+/* Updated logic for the challenge bar */
 function renderChallenge(){
-  const pct = Math.min((score / 50) * 100, 100);
-  challengeFill.style.width = pct + '%';
-  // if reached and not yet triggered
-  if (score >= 50 && !thresholdReached){
-    thresholdReached = true;
-    onThresholdReached();
-  }
+  // Progress is based on cubes destroyed this session, not local storage
+  const cubesPerTiffy = 1 / 0.002;
+  const cubesForGoal = PROGRESS_THRESHOLD_TIFFY * cubesPerTiffy;
+  const progress = Math.min(cubesDestroyedInSession / cubesForGoal, 1);
+  challengeFill.style.width = (progress * 100) + '%';
+  
+  // If the bar is full and the user's score in local storage is NOT 0, show congrats.
+  // This means they haven't withdrawn yet.
+  if (progress >= 1 && score > 0){
+    onThresholdReached();
+  }
+  
+  // If the score in local storage IS 0, reset the bar for the next challenge
+  if (score === 0){
+    cubesDestroyedInSession = 0;
+    challengeFill.style.width = '0%';
+  }
 }
 
 /* threshold behavior */
 function onThresholdReached(){
-  playSound('clickSound', 0.95);
-  const now = new Date();
-  timestampEl.textContent = '⏱ Threshold reached: ' + now.toLocaleString();
-  congratsEl.style.display = 'flex';
-  // delay to let players see the message
-  setTimeout(() => {
-    // reset score and redirect; careful: game owner will replace with real withdrawal
-    resetScore(); // clears tetrusScore & UI
-    window.open('https://tiffyai.github.io/Offline-', '_self');
-  }, 4000);
+  playSound('clickSound', 0.95);
+  const now = new Date();
+  timestampEl.textContent = '⏱ Threshold reached: ' + now.toLocaleString();
+  congratsEl.style.display = 'flex';
+  
+  // Show popup for 30 seconds, then redirect
+  setTimeout(() => {
+    window.open('https://tiffyai.github.io/Offline-', '_self');
+  }, 30000); // 30 seconds
 }
 
-/* Reset score after withdraw */
-function resetScore(){
-  score = 0;
-  localStorage.setItem('tetrusScore', '0');
-  renderBalance();
-  renderChallenge();
-  congratsEl.style.display = 'none';
-  thresholdReached = false;
-}
-
-/* addScore is the single source of truth called when cubes are destroyed */
+/* Updated addScore is the single source of truth called when cubes are destroyed */
 function addScore(value){
-  score += value;
-  // safe rounding digit-by-digit
-  score = Math.round(score * 1e6) / 1e6;
-  localStorage.setItem('tetrusScore', score.toString());
-  renderBalance();
-  renderChallenge();
+  score += value;
+  // safe rounding digit-by-digit
+  score = Math.round(score * 1e6) / 1e6;
+  localStorage.setItem('tetrusScore', score.toString());
+  cubesDestroyedInSession++; // Track cubes destroyed for progress bar
+  renderBalance();
+  renderChallenge();
 }
 
 /* ---------- Enemy / game logic (spawn, explode, shots) ---------- */
 let spawnTimer = 0;
 const spawnInterval = 1200;
 let lastTime = performance.now();
-let cubesDestroyed = 0;
 window.globalEnemies = [];
 
 function spawnEnemy(){
-  const cube = document.createElement('a-box');
-  cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
-  cube.setAttribute('width', 3); cube.setAttribute('height', 3); cube.setAttribute('depth', 3);
-  cube.setAttribute('class', 'enemy');
+  const cube = document.createElement('a-box');
+  cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
+  cube.setAttribute('width', 3); cube.setAttribute('height', 3); cube.setAttribute('depth', 3);
+  cube.setAttribute('class', 'enemy');
 
-  const spawnDistance = 80;
-  const horizontalRange = 50;
-  const verticalRange = 30;
+  const spawnDistance = 80;
+  const horizontalRange = 50;
+  const verticalRange = 30;
 
-  const randX = (Math.random() - 0.5) * 2 * horizontalRange;
-  const randY = (Math.random() - 0.5) * 2 * verticalRange;
-  const localPos = new THREE.Vector3(randX, randY, -spawnDistance);
+  const randX = (Math.random() - 0.5) * 2 * horizontalRange;
+  const randY = (Math.random() - 0.5) * 2 * verticalRange;
+  const localPos = new THREE.Vector3(randX, randY, -spawnDistance);
 
-  const q = new THREE.Quaternion();
-  player.object3D.getWorldQuaternion(q);
-  const playerPos = new THREE.Vector3();
-  player.object3D.getWorldPosition(playerPos);
+  const q = new THREE.Quaternion();
+  player.object3D.getWorldQuaternion(q);
+  const playerPos = new THREE.Vector3();
+  player.object3D.getWorldPosition(playerPos);
 
-  localPos.applyQuaternion(q);
-  const worldPos = playerPos.clone().add(localPos);
+  localPos.applyQuaternion(q);
+  const worldPos = playerPos.clone().add(localPos);
 
-  cube.object3D.position.copy(worldPos);
-  scene.appendChild(cube);
+  cube.object3D.position.copy(worldPos);
+  scene.appendChild(cube);
 
-  const rotSpeed = (Math.random() - 0.5) * 0.05;
-  window.globalEnemies.push({el: cube, speed: 0.15 + Math.random()*0.15, rotSpeed});
-  playSound('swoochSound', 0.45);
+  const rotSpeed = (Math.random() - 0.5) * 0.05;
+  window.globalEnemies.push({el: cube, speed: 0.15 + Math.random()*0.15, rotSpeed});
+  playSound('swoochSound', 0.45);
 }
 
 function explodeAt(position){
-  const burst = document.createElement('a-entity');
-  burst.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
-  burst.setAttribute('particle-system', {
-    preset:'snow', particleCount:400, color:'#ffdd99,#ffffff,#ff9933', size:0.07,
-    velocityValue:'1.2 1.6 1.2', spread:'1.5 1.5 1.5', duration:0.85, blending:2
-  });
-  effectsParent.appendChild(burst);
-  setTimeout(()=>{ burst.parentNode && burst.parentNode.removeChild(burst); }, 1000);
+  const burst = document.createElement('a-entity');
+  burst.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+  burst.setAttribute('particle-system', {
+    preset:'snow', particleCount:400, color:'#ffdd99,#ffffff,#ff9933', size:0.07,
+    velocityValue:'1.2 1.6 1.2', spread:'1.5 1.5 1.5', duration:0.85, blending:2
+  });
+  effectsParent.appendChild(burst);
+  setTimeout(()=>{ burst.parentNode && burst.parentNode.removeChild(burst); }, 1000);
 
-  const numPieces = 12 + Math.random()*8;
-  for (let i=0;i<numPieces;i++){
-    const piece = document.createElement('a-box');
-    piece.setAttribute('width','0.3'); piece.setAttribute('height','0.3'); piece.setAttribute('depth','0.3');
-    piece.setAttribute('material','color:#9a7f6c; metalness:0.1; roughness:0.8');
-    piece.object3D.position.copy(position);
-    effectsParent.appendChild(piece);
+  const numPieces = 12 + Math.random()*8;
+  for (let i=0;i<numPieces;i++){
+    const piece = document.createElement('a-box');
+    piece.setAttribute('width','0.3'); piece.setAttribute('height','0.3'); piece.setAttribute('depth','0.3');
+    piece.setAttribute('material','color:#9a7f6c; metalness:0.1; roughness:0.8');
+    piece.object3D.position.copy(position);
+    effectsParent.appendChild(piece);
 
-    const randDir = new THREE.Vector3((Math.random()*2-1),(Math.random()*1.4),(Math.random()*2-1)).normalize();
-    const travel = 1.2 + Math.random()*1.8;
-    const rot = (Math.random()*2 - 1) * 0.25;
-    const duration = 600 + Math.random()*500;
-    const start = performance.now();
-    const animatePiece = (t) => {
-      const dt = (t - start) / duration;
-      if (dt >= 1){ piece.parentNode && piece.parentNode.removeChild(piece); return; }
-      piece.object3D.position.copy(position).add(randDir.clone().multiplyScalar(travel * dt));
-      piece.object3D.rotation.x += rot; piece.object3D.rotation.y += rot;
-      requestAnimationFrame(animatePiece);
-    };
-    requestAnimationFrame(animatePiece);
-  }
-  playSound('explodeSound', 0.9);
+    const randDir = new THREE.Vector3((Math.random()*2-1),(Math.random()*1.4),(Math.random()*2-1)).normalize();
+    const travel = 1.2 + Math.random()*1.8;
+    const rot = (Math.random()*2 - 1) * 0.25;
+    const duration = 600 + Math.random()*500;
+    const start = performance.now();
+    const animatePiece = (t) => {
+      const dt = (t - start) / duration;
+      if (dt >= 1){ piece.parentNode && piece.parentNode.removeChild(piece); return; }
+      piece.object3D.position.copy(position).add(randDir.clone().multiplyScalar(travel * dt));
+      piece.object3D.rotation.x += rot; piece.object3D.rotation.y += rot;
+      requestAnimationFrame(animatePiece);
+    };
+    requestAnimationFrame(animatePiece);
+  }
+  playSound('explodeSound', 0.9);
 }
 
 function createVisualShot(){
-  const start = player.object3D.getWorldPosition(new THREE.Vector3());
-  const forward = new THREE.Vector3(); player.object3D.getWorldDirection(forward);
+  const start = player.object3D.getWorldPosition(new THREE.Vector3());
+  const forward = new THREE.Vector3(); player.object3D.getWorldDirection(forward);
 
-  const shot = document.createElement('a-entity');
-  shot.setAttribute('geometry','primitive:sphere;radius:0.4');
-  shot.setAttribute('material','shader:standard;emissive:#00ffff;emissiveIntensity:2;metalness:0.05;roughness:0.2;transparent:true;opacity:0.6');
-  shot.setAttribute('visual-shot','direction',forward);
-  shot.object3D.position.copy(start);
+  const shot = document.createElement('a-entity');
+  shot.setAttribute('geometry','primitive:sphere;radius:0.4');
+  shot.setAttribute('material','shader:standard;emissive:#00ffff;emissiveIntensity:2;metalness:0.05;roughness:0.2;transparent:true;opacity:0.6');
+  shot.setAttribute('visual-shot','direction',forward);
+  shot.object3D.position.copy(start);
 
-  const trail = document.createElement('a-entity');
-  trail.setAttribute('particle-system',{
-    preset:'dust', particleCount:200, color:'#00ffff,#88ffcc,#ffffff', size:0.15,
-    velocityValue:'0 0 0', spread:'0.22 0.22 0.22', duration:0.6, blending:2
-  });
-  shot.appendChild(trail);
-  effectsParent.appendChild(shot);
+  const trail = document.createElement('a-entity');
+  trail.setAttribute('particle-system',{
+    preset:'dust', particleCount:200, color:'#00ffff,#88ffcc,#ffffff', size:0.15,
+    velocityValue:'0 0 0', spread:'0.22 0.22 0.22', duration:0.6, blending:2
+  });
+  shot.appendChild(trail);
+  effectsParent.appendChild(shot);
 }
 
 /* Main loop */
 function gameLoop(){
-  const now = performance.now();
-  const dt = now - lastTime;
-  lastTime = now;
+  const now = performance.now();
+  const dt = now - lastTime;
+  lastTime = now;
 
-  spawnTimer += dt;
-  if (spawnTimer > spawnInterval){ spawnTimer = 0; spawnEnemy(); }
+  spawnTimer += dt;
+  if (spawnTimer > spawnInterval){ spawnTimer = 0; spawnEnemy(); }
 
-  for (let i = window.globalEnemies.length - 1; i >= 0; i--){
-    const e = window.globalEnemies[i];
-    e.el.object3D.rotation.x += e.rotSpeed * 0.8;
-    e.el.object3D.rotation.y += e.rotSpeed;
+  for (let i = window.globalEnemies.length - 1; i >= 0; i--){
+    const e = window.globalEnemies[i];
+    e.el.object3D.rotation.x += e.rotSpeed * 0.8;
+    e.el.object3D.rotation.y += e.rotSpeed;
 
-    const dir = new THREE.Vector3().subVectors(player.object3D.position, e.el.object3D.position).normalize();
-    e.el.object3D.position.add(dir.multiplyScalar(e.speed));
+    const dir = new THREE.Vector3().subVectors(player.object3D.position, e.el.object3D.position).normalize();
+    e.el.object3D.position.add(dir.multiplyScalar(e.speed));
 
-    const distance = e.el.object3D.position.distanceTo(player.object3D.position);
-    const maxDistance = 150;
-    const scaleFactor = 1.0 + (1 - (distance / maxDistance)) * 1.5;
-    e.el.object3D.scale.set(scaleFactor, scaleFactor, scaleFactor);
+    const distance = e.el.object3D.position.distanceTo(player.object3D.position);
+    const maxDistance = 150;
+    const scaleFactor = 1.0 + (1 - (distance / maxDistance)) * 1.5;
+    e.el.object3D.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-    if (distance < 1.2){
-      explodeAt(e.el.object3D.position.clone());
-      e.el.parentNode && e.el.parentNode.removeChild(e.el);
-      window.globalEnemies.splice(i,1);
-    }
-  }
-  requestAnimationFrame(gameLoop);
+    if (distance < 1.2){
+      explodeAt(e.el.object3D.position.clone());
+      e.el.parentNode && e.el.parentNode.removeChild(e.el);
+      window.globalEnemies.splice(i,1);
+    }
+  }
+  requestAnimationFrame(gameLoop);
 }
 
 /* Shooting & clicking */
 cursor.addEventListener('click', (e) => {
-  playSound('shootSound', 0.9);
-  createVisualShot();
+  playSound('shootSound', 0.9);
+  createVisualShot();
 
-  const inter = e.detail.intersection;
-  if (inter && inter.object && inter.object.el){
-    const clickedEl = inter.object.el;
-    if (clickedEl.classList.contains('enemy')){
-      const enemyPos = clickedEl.object3D.position;
-      explodeAt(enemyPos.clone());
-      clickedEl.parentNode && clickedEl.parentNode.removeChild(clickedEl);
-      const index = window.globalEnemies.findIndex(it => it.el === clickedEl);
-      if (index > -1) window.globalEnemies.splice(index,1);
+  const inter = e.detail.intersection;
+  if (inter && inter.object && inter.object.el){
+    const clickedEl = inter.object.el;
+    if (clickedEl.classList.contains('enemy')){
+      const enemyPos = clickedEl.object3D.position;
+      explodeAt(enemyPos.clone());
+      clickedEl.parentNode && clickedEl.parentNode.removeChild(clickedEl);
+      const index = window.globalEnemies.findIndex(it => it.el === clickedEl);
+      if (index > -1) window.globalEnemies.splice(index,1);
 
-      // award score for destroying cube (keeps tetrusScore synchronized)
-      addScore(0.002);   // your existing value
-      cubesDestroyed++;
-      if (cubesDestroyed % 20 === 0) nextStage();
-    }
-  }
+      // award score for destroying cube (keeps tetrusScore synchronized)
+      addScore(0.002);
+    }
+  }
 });
 
 /* Stage change */
 const stages = [
-  { videoId: 'rightVideo', rotation: '0 -90 0' },
-  { videoId: 'topVideo', rotation: '90 0 0' },
-  { videoId: 'leftVideo', rotation: '0 90 0' },
-  { videoId: 'bottomVideo', rotation: '-90 0 0' },
-  { videoId: 'backVideo', rotation: '0 180 0' }
+  { videoId: 'rightVideo', rotation: '0 -90 0' },
+  { videoId: 'topVideo', rotation: '90 0 0' },
+  { videoId: 'leftVideo', rotation: '0 90 0' },
+  { videoId: 'bottomVideo', rotation: '-90 0 0' },
+  { videoId: 'backVideo', rotation: '0 180 0' }
 ];
 let currentStageIndex = 0;
 function nextStage(){
-  currentStageIndex = (currentStageIndex + 1) % stages.length;
-  const s = stages[currentStageIndex];
-  sky.setAttribute('src', `#${s.videoId}`);
-  player.setAttribute('rotation', s.rotation);
-  console.log('Stage changed:', s.videoId);
+  currentStageIndex = (currentStageIndex + 1) % stages.length;
+  const s = stages[currentStageIndex];
+  sky.setAttribute('src', `#${s.videoId}`);
+  player.setAttribute('rotation', s.rotation);
+  console.log('Stage changed:', s.videoId);
 }
 
 /* ---------- HUD actions ---------- */
 hudHandle.addEventListener('click', () => {
-  hudOpen = !hudOpen;
-  hudStrip.style.bottom = hudOpen ? '0' : '-82px';
-  playSound('clickSound', 0.85);
+  hudOpen = !hudOpen;
+  hudStrip.style.bottom = hudOpen ? '0' : '-82px';
+  playSound('clickSound', 0.85);
 });
 withdrawBtn.addEventListener('click', () => {
-  playSound('clickSound', 0.95);
-  // call player's withdraw flow (owner will replace with their real withdraw code)
-  // Reset locally and open withdraw page
-  resetScore();
-  window.open('https://tiffyai.github.io/Offline-', '_self');
+  playSound('clickSound', 0.95);
+  // When the user clicks withdraw, we reset the local storage score to 0
+  localStorage.setItem('tetrusScore', '0');
+  // Redirect to the withdraw page
+  window.open('https://tiffyai.github.io/Offline-', '_self');
 });
 document.getElementById('btn-vr').addEventListener('click', async () => {
-  playSound('clickSound', 0.9);
-  try{ await scene.enterVR(); } catch(e){ console.log('VR not available',e); }
+  playSound('clickSound', 0.9);
+  try{ await scene.enterVR(); } catch(e){ console.log('VR not available',e); }
 });
 document.getElementById('btn-ar').addEventListener('click', async () => {
-  playSound('clickSound', 0.9);
-  try {
-    if (!scene.hasAttribute('webxr')) scene.setAttribute('webxr','mode: ar');
-    await scene.enterVR();
-  } catch(e){ console.log('AR not available', e); }
+  playSound('clickSound', 0.9);
+  try {
+    if (!scene.hasAttribute('webxr')) scene.setAttribute('webxr','mode: ar');
+    await scene.enterVR();
+  } catch(e){ console.log('AR not available', e); }
 });
 
 /* ---------- Online counter (mocked) ---------- */
 function updateOnline(){
-  const fake = 20 + Math.floor(Math.random() * 120);
-  onlineEl.textContent = '🌍 ' + fake + ' players online';
+  const fake = 20 + Math.floor(Math.random() * 120);
+  onlineEl.textContent = '🌍 ' + fake + ' players online';
 }
 setInterval(updateOnline, 5000);
 updateOnline();
 
 /* ---------- Boot ---------- */
 window.addEventListener('load', () => {
-  // Start videos & music safely
-  ['rightVideo','topVideo','leftVideo','bottomVideo','backVideo','enemyVideo'].forEach(id=>{
-    const v = document.getElementById(id);
-    if (v){ v.muted = true; v.play().catch(()=>{}); }
-  });
-  const bg = document.getElementById('bgMusic');
-  if (bg){ bg.volume = 0.25; bg.loop = true; bg.play().catch(()=>{}); }
+  // Start videos & music safely
+  ['rightVideo','topVideo','leftVideo','bottomVideo','backVideo','enemyVideo'].forEach(id=>{
+    const v = document.getElementById(id);
+    if (v){ v.muted = true; v.play().catch(()=>{}); }
+  });
+  const bg = document.getElementById('bgMusic');
+  if (bg){ bg.volume = 0.25; bg.loop = true; bg.play().catch(()=>{}); }
 
-  // load score from storage & render
-  score = parseFloat(localStorage.getItem('tetrusScore') || '0');
-  renderBalance(); renderChallenge();
+  // load score from storage & render
+  score = parseFloat(localStorage.getItem('tetrusScore') || '0');
+  renderBalance();
+  
+  // Call renderChallenge to check the initial state of the progress bar
+  renderChallenge();
 
-  lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
+  lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
 });
 </script>
 </body>
