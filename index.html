@@ -1,117 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>TiffyAI AR Shooter</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8" />
+<title>Blockchain Storm AR-VR</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
-  html, body { margin:0; height:100%; overflow:hidden; background:#000; font-family:'Share Tech Mono', monospace; }
+  html,body{height:100%;margin:0;background:#000;font-family:'Share Tech Mono',monospace;overflow:hidden;}
 
-  /* Bottom slide-up HUD */
-  #hud-strip {
-    position: fixed;
-    bottom: -82px;            /* hidden by default */
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(20, 20, 30, 0.55);
-    border-radius: 16px 16px 0 0;
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 240, 255, 0.4);
-    box-shadow: 0 0 12px rgba(0,240,255,0.5);
-    padding: 8px 12px;
-    width: 92%;
-    max-width: 520px;
-    transition: bottom 0.35s ease;
-    z-index: 10000;
-  }
-  #hud-handle {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 56px;
-    height: 18px;
-    background: rgba(0,240,255,0.7);
-    border-radius: 12px 12px 0 0;
-    cursor: pointer;
-    z-index: 10001;
-    box-shadow: 0 0 8px rgba(0,240,255,0.9);
-  }
-  .hud-btn {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.22);
-    border-radius: 12px;
-    padding: 8px 12px;
+  /* Score HUD (top-right) */
+  #score {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10005;
+    background: rgba(6,8,12,0.55);
     color: #00f0ff;
-    font-size: 14px;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    transition: transform .18s ease, background .18s ease, border-color .18s ease;
-    user-select: none;
-    -webkit-user-select: none;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,240,255,0.25);
+    box-shadow: 0 0 12px rgba(0,240,255,0.25);
+    display:flex;align-items:center;gap:8px;font-size:14px;
     backdrop-filter: blur(6px);
   }
-  .hud-btn:hover { background: rgba(0,240,255,0.15); transform: translateY(-1px) scale(1.03); border-color: rgba(0,240,255,0.45); }
-  .hud-btn:active { transform: scale(0.98); }
+  #score img{height:20px;}
 
-  #balance {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: #00f0ff;
-    font-size: 14px;
-    padding: 8px 10px;
+  /* Hide default A-Frame AR/VR button area (we'll use slide HUD for AR/VR) */
+  .a-enter-vr-button, .a-enter-ar-button { display: none !important; }
+
+  /* Bottom central progress bar (replacing AR/VR button area) */
+  #challenge {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 260px;
+    max-width: 86%;
+    background: rgba(14,16,22,0.6);
     border-radius: 12px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.22);
+    padding: 8px 10px;
+    color: #00f0ff;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    border: 1px solid rgba(0,240,255,0.2);
+    box-shadow: 0 0 12px rgba(0,240,255,0.18);
+    backdrop-filter: blur(8px);
+    z-index: 10003;
+    text-align: center;
   }
-  #balance img {
-    height: 20px;
-    filter: drop-shadow(0 0 5px rgba(0,240,255,0.8));
-  }
+  #challenge .label { font-size:12px; opacity:0.95; margin-bottom:6px; }
+  #challenge-bar { width:100%; height:12px; background: rgba(255,255,255,0.06); border-radius:8px; overflow:hidden; }
+  #challenge-fill { height:100%; width:0%; background: linear-gradient(90deg,#00f0ff,#00ff99); transition: width .35s ease; }
 
-  /* Make sure pointer events don’t block A-Frame except on the HUD itself */
-  #hud-strip, #hud-handle { pointer-events: auto; }
-  canvas.a-canvas, a-scene { pointer-events: auto; }
+  /* Small slide HUD at bottom-right (kept for AR/VR/Withdraw) */
+  #slide-hud {
+    position: fixed;
+    bottom: 0;
+    right: 10px;
+    z-index: 10004;
+    display:flex;gap:8px;align-items:center;
+  }
+  .hud-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    color:#00f0ff;
+    padding:8px 10px;
+    border-radius:10px;
+    cursor:pointer;
+    font-family:'Share Tech Mono', monospace;
+    font-size:13px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 8px rgba(0,240,255,0.06);
+  }
+  .hud-btn:hover { transform: translateY(-2px); background: rgba(0,240,255,0.06); }
+
+  /* Modal popup (space-aged) */
+  #congrats-popup {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 20000;
+    background: rgba(2,4,10,0.85);
+    font-family: 'Share Tech Mono', monospace;
+    color: #00ffcc;
+    padding: 20px;
+  }
+  #congrats-card {
+    background: rgba(0,0,0,0.6);
+    border: 2px solid #00f0ff;
+    border-radius: 14px;
+    padding: 20px;
+    max-width: 92%;
+    text-align: center;
+    box-shadow: 0 0 28px rgba(0,240,255,0.25);
+  }
+  #congrats-card h1{margin:0 0 8px;font-size:20px;color:#00ffae;}
+  #congrats-card p{margin:6px 0;font-size:15px;color:#eafcff;}
+  #congrats-card .time {margin-top:8px;font-size:13px;color:#d0fff0;}
 </style>
 </head>
 <body>
 
+<!-- Score HUD -->
+<div id="score"><img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TIFFY"> <span id="scoreVal">0.000000</span></div>
+
+<!-- Challenge Progress Bar (bottom center) -->
+<div id="challenge" aria-live="polite">
+  <div class="label">Storm Challenge — Progress to 20 TIFFY</div>
+  <div id="challenge-bar"><div id="challenge-fill"></div></div>
+</div>
+
+<!-- Small slide HUD (right) contains Withdraw + AR/VR toggles -->
+<div id="slide-hud">
+  <div class="hud-btn" id="btn-ar">🌐 AR</div>
+  <div class="hud-btn" id="btn-vr">🕶️ VR</div>
+  <div class="hud-btn" id="btn-withdraw">💸 Withdraw</div>
+</div>
+
+<!-- Popup overlay -->
+<div id="congrats-popup" role="dialog" aria-modal="true">
+  <div id="congrats-card">
+    <h1>🚀 Spectacular Congratulations! 🚀</h1>
+    <p id="congrats-text"></p>
+    <div class="time" id="congrats-time"></div>
+    <p style="margin-top:10px;font-size:13px;color:#c6fff0">
+      Withdraw will open automatically in <span id="redirect-countdown">30</span>s — or press Withdraw to go now.
+    </p>
+  </div>
+</div>
+
+<!-- A-Frame scene -->
 <a-scene vr-mode-ui="enabled: true">
   <a-assets>
-    <!-- 360 stage videos -->
-    <video id="rightVideo"  autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/right.mp4"></video>
-    <video id="topVideo"    autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/top.mp4"></video>
-    <video id="leftVideo"   autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/left.mp4"></video>
+    <video id="rightVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/right.mp4"></video>
+    <video id="topVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/top.mp4"></video>
+    <video id="leftVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/left.mp4"></video>
     <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/bottom.mp4"></video>
-    <video id="backVideo"   autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/back.mp4"></video>
-    <video id="enemyVideo"  autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
+    <video id="backVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/back.mp4"></video>
+    <video id="enemyVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
 
-    <!-- Sounds -->
-    <audio id="shootSound"   src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
+    <audio id="shootSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
     <audio id="explodeSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/blocks.wav"></audio>
-    <audio id="swoochSound"  src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
-    <audio id="bgMusic"      src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
-    <audio id="clickSound"   src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/click.wav"></audio>
+    <audio id="swoochSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
+    <audio id="bgMusic" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
+    <audio id="clickSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/click.wav"></audio>
   </a-assets>
 
-  <a-sky src="#rightVideo"></a-sky>
+  <a-sky id="sky" src="#rightVideo"></a-sky>
 
   <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
 
-  <!-- Cursor for clicking enemies with mouse -->
-  <a-entity id="cursor" cursor="fuse: false; rayOrigin: mouse"
+  <a-entity id="cursor" cursor="fuse:false; rayOrigin: mouse"
             position="0 0 -1"
-            geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+            geometry="primitive:ring; radiusInner:0.02; radiusOuter:0.03"
             material="color: #00ffff; shader: flat"
             animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; loop: true; dur: 400"
             raycaster="objects: .enemy; far: 200"></a-entity>
@@ -119,22 +164,186 @@
   <a-entity id="effects-parent"></a-entity>
 </a-scene>
 
-<!-- Minimal bottom UI -->
-<div id="hud-handle" title="Open controls"></div>
-<div id="hud-strip">
-  <div id="balance"><img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TIFFY">0.000000</div>
-  <div class="hud-btn" id="btn-ar">🌐 AR</div>
-  <div class="hud-btn" id="btn-vr">🕶️ VR</div>
-  <div class="hud-btn" id="btn-withdraw">💸 Withdraw</div>
-</div>
-
 <script>
-/* ---------- Visual shot movement component ---------- */
+/* ===========================
+   Challenge / Progress System
+   =========================== */
+
+const PROGRESS_KEY = "progressScore";
+const CHALLENGE_START_KEY = "challengeStart";
+const THRESHOLD = 20;               // 20 TIFFY to trigger
+const KEEP_IF_SCORE_OVER = 5;       // if tetrusScore > 5, do not auto-reset progress even after expiry
+const REDIRECT_DELAY_MS = 30000;    // 30 seconds redirect
+
+let progressScore = parseFloat(localStorage.getItem(PROGRESS_KEY) || "0");
+let challengeStart = parseInt(localStorage.getItem(CHALLENGE_START_KEY) || "0");
+let thresholdTriggered = false;    // prevent double triggers
+let redirectTimer = null;
+let redirectCountdownTimer = null;
+
+/* UI elements */
+const scoreValEl = document.getElementById('scoreVal');
+const challengeFillEl = document.getElementById('challenge-fill');
+const congratsPopup = document.getElementById('congrats-popup');
+const congratsText = document.getElementById('congrats-text');
+const congratsTime = document.getElementById('congrats-time');
+const redirectCountdownEl = document.getElementById('redirect-countdown');
+
+/* Helpers: play click sound */
+function playClick() {
+  const audio = document.getElementById('clickSound');
+  if (!audio) return;
+  try {
+    const a = audio.cloneNode();
+    a.volume = 0.95;
+    a.play().catch(()=>{});
+  } catch (e) {}
+}
+
+/* Update progress UI from progressScore */
+function renderProgress() {
+  const pct = Math.min((progressScore / THRESHOLD) * 100, 100);
+  challengeFillEl.style.width = pct + "%";
+}
+
+/* Update main score UI (tetrusScore) */
+function renderTetrusScoreUI() {
+  const ts = parseFloat(localStorage.getItem('tetrusScore') || '0');
+  scoreValEl.textContent = ts.toFixed(6);
+}
+
+/* Called whenever a cube kill happens: update canonical score + progress */
+function addScore(value) {
+  // update canonical tetrusScore (single source of truth)
+  let ts = parseFloat(localStorage.getItem('tetrusScore') || '0');
+  ts = Math.round((ts + value) * 1e6) / 1e6;
+  localStorage.setItem('tetrusScore', ts.toString());
+  renderTetrusScoreUI();
+
+  // update progressScore (independent mem)
+  progressScore = parseFloat(localStorage.getItem(PROGRESS_KEY) || '0');
+  progressScore = Math.round((progressScore + value) * 1e6) / 1e6;
+  localStorage.setItem(PROGRESS_KEY, progressScore.toString());
+
+  // if challenge not started, stamp start time
+  if (!challengeStart) {
+    challengeStart = Date.now();
+    localStorage.setItem(CHALLENGE_START_KEY, challengeStart.toString());
+  }
+  renderProgress();
+
+  // check threshold trigger
+  if (!thresholdTriggered && progressScore >= THRESHOLD) {
+    thresholdTriggered = true;
+    triggerCongrats();
+  }
+}
+
+/* Trigger popup and countdown to redirect */
+function triggerCongrats() {
+  // Sound + popup text
+  playClick();
+  const now = new Date();
+  congratsText.innerHTML = `You reached ${THRESHOLD} TIFFY — Withdraw now & enter the 7-Day Challenge!<br>
+    First 10 players get 50 TIFFY. Winner gets 200 scarce TIFFY gems.`;
+  congratsTime.textContent = '⏱ Threshold reached: ' + now.toLocaleString();
+
+  congratsPopup.style.display = 'flex';
+
+  // Start 30s countdown display, then redirect
+  let remain = Math.floor(REDIRECT_DELAY_MS / 1000);
+  redirectCountdownEl.textContent = remain.toString();
+  redirectCountdownTimer = setInterval(()=> {
+    remain--;
+    redirectCountdownEl.textContent = String(Math.max(remain,0));
+    if (remain <= 0) {
+      clearInterval(redirectCountdownTimer);
+    }
+  }, 1000);
+
+  redirectTimer = setTimeout(() => {
+    // Open withdraw URL (do NOT modify localStorage here)
+    window.open('https://tiffyai.github.io/Offline-', '_self');
+  }, REDIRECT_DELAY_MS);
+}
+
+/* When the page loads (or periodically), we check if progress should reset:
+   - Only reset progressScore if tetrusScore == 0 (i.e. player actually withdrew)
+   - OR if challengeStart > 0 and > 7 days passed AND tetrusScore <= KEEP_IF_SCORE_OVER
+*/
+function checkProgressReset() {
+  const ts = parseFloat(localStorage.getItem('tetrusScore') || '0');
+  const now = Date.now();
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+  // If player has withdrawn completely (ts == 0), clear progress
+  if (ts === 0) {
+    clearProgressMemory();
+    return;
+  }
+
+  // If challenge started and expired
+  if (challengeStart && (now - challengeStart) > sevenDaysMs) {
+    // Only reset if player's tetrusScore is not holding > KEEP_IF_SCORE_OVER
+    if (ts <= KEEP_IF_SCORE_OVER) {
+      clearProgressMemory();
+    } else {
+      // keep progressScore if player still has > KEEP_IF_SCORE_OVER
+      // do nothing, keep progressScore intact
+    }
+  }
+}
+
+/* clear progress memory (progressScore and challengeStart) and UI */
+function clearProgressMemory() {
+  progressScore = 0;
+  challengeStart = 0;
+  thresholdTriggered = false;
+  localStorage.removeItem(PROGRESS_KEY);
+  localStorage.removeItem(CHALLENGE_START_KEY);
+  renderProgress();
+  congratsPopup.style.display = 'none';
+  if (redirectTimer) { clearTimeout(redirectTimer); redirectTimer = null; }
+  if (redirectCountdownTimer) { clearInterval(redirectCountdownTimer); redirectCountdownTimer = null; }
+  redirectCountdownEl.textContent = '30';
+}
+
+/* Polling safety: re-check periodically (every minute) whether progress should reset */
+setInterval(checkProgressReset, 60 * 1000);
+
+/* Run initial render on load */
+window.addEventListener('load', () => {
+  // Ensure values loaded
+  progressScore = parseFloat(localStorage.getItem(PROGRESS_KEY) || '0');
+  challengeStart = parseInt(localStorage.getItem(CHALLENGE_START_KEY) || '0');
+  renderProgress();
+  renderTetrusScoreUI();
+  checkProgressReset();
+
+  // Try to start videos & music (best-effort)
+  ['rightVideo','topVideo','leftVideo','bottomVideo','backVideo','enemyVideo'].forEach(id=>{
+    const v = document.getElementById(id);
+    if (v) { v.muted = true; v.play().catch(()=>{}); }
+  });
+  const bg = document.getElementById('bgMusic');
+  if (bg) { bg.volume = 0.25; bg.loop = true; bg.play().catch(()=>{}); }
+
+  // start main loop
+  lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
+});
+
+
+/* ===========================
+   Game logic (spawn, shooting)
+   =========================== */
+
+/* Visual-shot component */
 AFRAME.registerComponent('visual-shot', {
-  schema: { direction: {type:'vec3'}, speed: {type:'number', default:150} },
-  tick: function(time, dt){
-    const move = this.data.direction.clone().multiplyScalar(this.data.speed * dt / 1000);
-    this.el.object3D.position.add(move);
+  schema: { direction: { type: 'vec3' }, speed: { type: 'number', default: 150 } },
+  tick: function(time, timeDelta) {
+    const moveVector = this.data.direction.clone().multiplyScalar(this.data.speed * timeDelta / 1000);
+    this.el.object3D.position.add(moveVector);
     const camPos = document.getElementById('player').object3D.position;
     if (this.el.object3D.position.distanceTo(camPos) > 200) {
       this.el.parentNode && this.el.parentNode.removeChild(this.el);
@@ -142,64 +351,32 @@ AFRAME.registerComponent('visual-shot', {
   }
 });
 
-/* ---------- Globals ---------- */
-const scene   = document.querySelector('a-scene');
-const sky     = document.querySelector('a-sky');
-const player  = document.getElementById('player');
-const cursor  = document.getElementById('cursor');
+/* Globals */
+const scene = document.querySelector('a-scene');
+const sky = document.getElementById('sky');
+const player = document.getElementById('player');
+const cursor = document.getElementById('cursor');
 const effectsParent = document.getElementById('effects-parent');
-const balanceEl = document.getElementById('balance');
 
 let spawnTimer = 0;
 const spawnInterval = 1200;
 let lastTime = performance.now();
 let cubesDestroyed = 0;
-let currentStageIndex = 0;
 window.globalEnemies = [];
 
-/* Score (balance) */
-let score = parseFloat(localStorage.getItem('tetrusScore') || '0');
-function renderBalance(){
-  balanceEl.innerHTML = `<img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TIFFY">${score.toFixed(6)}`;
-}
-renderBalance();
-
-/* ---------- Helpers ---------- */
-function addScore(v){
-  score += v;
-  score = Math.round(score * 1e6) / 1e6;
-  localStorage.setItem('tetrusScore', score.toString());
-  renderBalance();
-}
-
-function playSound(id, vol=1){
-  const src = document.getElementById(id);
-  if(!src) return;
+/* sound helper */
+function playSound(id, vol=1.0) {
+  const s = document.getElementById(id);
+  if (!s) return;
   try {
-    const node = src.cloneNode();
-    node.volume = vol;
-    node.play().catch(()=>{});
-  } catch(e){}
+    const n = s.cloneNode();
+    n.volume = vol;
+    n.play().catch(()=>{});
+  } catch(e) {}
 }
 
-/* ---------- Stage rotation / sky change ---------- */
-const stages = [
-  { videoId: 'rightVideo',  rotation: '0 -90 0' },
-  { videoId: 'topVideo',    rotation: '90 0 0' },
-  { videoId: 'leftVideo',   rotation: '0 90 0' },
-  { videoId: 'bottomVideo', rotation: '-90 0 0' },
-  { videoId: 'backVideo',   rotation: '0 180 0' }
-];
-function nextStage(){
-  currentStageIndex = (currentStageIndex + 1) % stages.length;
-  const s = stages[currentStageIndex];
-  sky.setAttribute('src', `#${s.videoId}`);
-  player.setAttribute('rotation', s.rotation);
-  console.log(`Stage changed to: ${s.videoId}`);
-}
-
-/* ---------- Enemy spawning ---------- */
-function spawnEnemy(){
+/* spawn enemy */
+function spawnEnemy() {
   const cube = document.createElement('a-box');
   cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
   cube.setAttribute('width', 3);
@@ -217,37 +394,36 @@ function spawnEnemy(){
 
   const q = new THREE.Quaternion();
   player.object3D.getWorldQuaternion(q);
-  const playerWorld = new THREE.Vector3();
-  player.object3D.getWorldPosition(playerWorld);
+  const playerPos = new THREE.Vector3();
+  player.object3D.getWorldPosition(playerPos);
 
   localPos.applyQuaternion(q);
-  const worldPos = playerWorld.clone().add(localPos);
-
+  const worldPos = playerPos.clone().add(localPos);
   cube.object3D.position.copy(worldPos);
-  scene.appendChild(cube);
 
+  scene.appendChild(cube);
   const rotSpeed = (Math.random() - 0.5) * 0.05;
   window.globalEnemies.push({ el: cube, speed: 0.15 + Math.random()*0.15, rotSpeed });
   playSound('swoochSound', 0.45);
 }
 
-/* ---------- Explosion effect ---------- */
-function explodeAt(position){
+/* explosion */
+function explodeAt(pos) {
   const burst = document.createElement('a-entity');
-  burst.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+  burst.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
   burst.setAttribute('particle-system', {
     preset:'snow', particleCount:400, color:'#ffdd99,#ffffff,#ff9933', size:0.07,
-    velocityValue:'1.2 1.6 1.2', spread:'1.5 1.5 1.5', duration:0.85, blending:2,
+    velocityValue:'1.2 1.6 1.2', spread:'1.5 1.5 1.5', duration:0.85, blending:2
   });
   effectsParent.appendChild(burst);
   setTimeout(()=>{ burst.parentNode && burst.parentNode.removeChild(burst); }, 1000);
 
-  const numPieces = 12 + Math.random()*8;
-  for (let i=0;i<numPieces;i++){
+  const pieces = 12 + Math.random()*8;
+  for (let i=0;i<pieces;i++){
     const piece = document.createElement('a-box');
     piece.setAttribute('width','0.3'); piece.setAttribute('height','0.3'); piece.setAttribute('depth','0.3');
     piece.setAttribute('material','color:#9a7f6c; metalness:0.1; roughness:0.8');
-    piece.object3D.position.copy(position);
+    piece.object3D.position.copy(pos);
     effectsParent.appendChild(piece);
 
     const randDir = new THREE.Vector3((Math.random()*2-1),(Math.random()*1.4),(Math.random()*2-1)).normalize();
@@ -256,53 +432,48 @@ function explodeAt(position){
     const duration = 600 + Math.random()*500;
     const start = performance.now();
 
-    const animatePiece = (t)=>{
+    const animate = (t) => {
       const dt = (t - start) / duration;
-      if (dt >= 1){
-        piece.parentNode && piece.parentNode.removeChild(piece);
-        return;
-      }
-      piece.object3D.position.copy(position).add(randDir.clone().multiplyScalar(travel * dt));
-      piece.object3D.rotation.x += rotSpeed;
-      piece.object3D.rotation.y += rotSpeed;
-      requestAnimationFrame(animatePiece);
+      if (dt >= 1){ piece.parentNode && piece.parentNode.removeChild(piece); return; }
+      piece.object3D.position.copy(pos).add(randDir.clone().multiplyScalar(travel * dt));
+      piece.object3D.rotation.x += rotSpeed; piece.object3D.rotation.y += rotSpeed;
+      requestAnimationFrame(animate);
     };
-    requestAnimationFrame(animatePiece);
+    requestAnimationFrame(animate);
   }
   playSound('explodeSound', 0.9);
 }
 
-/* ---------- Shot visual ---------- */
-function createVisualShot(){
+/* visual shot */
+function createVisualShot() {
   const start = player.object3D.getWorldPosition(new THREE.Vector3());
   const forward = new THREE.Vector3(); player.object3D.getWorldDirection(forward);
 
   const shot = document.createElement('a-entity');
-  shot.setAttribute('geometry', 'primitive: sphere; radius: 0.4');
-  shot.setAttribute('material', 'shader: standard; emissive:#00ffff; emissiveIntensity:2; metalness:0.05; roughness:0.2; transparent:true; opacity:0.6');
-  shot.setAttribute('visual-shot', 'direction', forward);
+  shot.setAttribute('geometry','primitive: sphere; radius: 0.4');
+  shot.setAttribute('material','shader: standard; emissive: #00ffff; emissiveIntensity: 2; metalness:0.05; roughness:0.2; transparent:true; opacity:0.6');
+  shot.setAttribute('visual-shot','direction', forward);
   shot.object3D.position.copy(start);
 
   const trail = document.createElement('a-entity');
   trail.setAttribute('particle-system', {
     preset:'dust', particleCount:200, color:'#00ffff,#88ffcc,#ffffff', size:0.15,
-    velocityValue:'0 0 0', spread:'0.22 0.22 0.22', duration:0.6, blending:2,
+    velocityValue:'0 0 0', spread:'0.22 0.22 0.22', duration:0.6, blending:2
   });
   shot.appendChild(trail);
   effectsParent.appendChild(shot);
 }
 
-/* ---------- Main game loop ---------- */
+/* main loop */
 function gameLoop(){
   const now = performance.now();
   const dt = now - lastTime;
   lastTime = now;
 
   spawnTimer += dt;
-  if (spawnTimer > spawnInterval){ spawnTimer = 0; spawnEnemy(); }
+  if (spawnTimer > spawnInterval) { spawnTimer = 0; spawnEnemy(); }
 
-  // Move enemies towards player and scale based on distance
-  for (let i = window.globalEnemies.length - 1; i >= 0; i--){
+  for (let i = window.globalEnemies.length -1; i >= 0; i--) {
     const e = window.globalEnemies[i];
     e.el.object3D.rotation.x += e.rotSpeed * 0.8;
     e.el.object3D.rotation.y += e.rotSpeed;
@@ -315,82 +486,95 @@ function gameLoop(){
     const scaleFactor = 1.0 + (1 - (distance / maxDistance)) * 1.5;
     e.el.object3D.scale.set(scaleFactor, scaleFactor, scaleFactor);
 
-    if (distance < 1.2){
+    if (distance < 1.2) {
       explodeAt(e.el.object3D.position.clone());
       e.el.parentNode && e.el.parentNode.removeChild(e.el);
       window.globalEnemies.splice(i,1);
     }
   }
+
   requestAnimationFrame(gameLoop);
 }
 
-/* ---------- Shooting ---------- */
+/* shooting / clicking: award score when enemy clicked */
 cursor.addEventListener('click', (e) => {
   playSound('shootSound', 0.9);
   createVisualShot();
 
-  const inter = e.detail.intersection;
+  const inter = e.detail && e.detail.intersection;
   if (inter && inter.object && inter.object.el) {
     const clickedEl = inter.object.el;
-
     if (clickedEl.classList.contains('enemy')) {
-      const enemyPos = clickedEl.object3D.position;
-      explodeAt(enemyPos.clone());
+      const pos = clickedEl.object3D.position;
+      explodeAt(pos.clone());
       clickedEl.parentNode && clickedEl.parentNode.removeChild(clickedEl);
+      const idx = window.globalEnemies.findIndex(it => it.el === clickedEl);
+      if (idx > -1) window.globalEnemies.splice(idx,1);
 
-      const index = window.globalEnemies.findIndex(it => it.el === clickedEl);
-      if (index > -1) window.globalEnemies.splice(index, 1);
-
-      addScore(0.002);
+      // AWARD SCORE: this updates BOTH tetrusScore and progressScore
+      addScore(0.002); // your chosen value
       cubesDestroyed++;
       if (cubesDestroyed % 20 === 0) nextStage();
     }
   }
 });
 
-/* ---------- HUD: slide + buttons (click.wav) ---------- */
-let hudOpen = false;
-const handle = document.getElementById('hud-handle');
-const strip  = document.getElementById('hud-strip');
+/* stages */
+const stages = [
+  { videoId: 'rightVideo', rotation: '0 -90 0' },
+  { videoId: 'topVideo', rotation: '90 0 0' },
+  { videoId: 'leftVideo', rotation: '0 90 0' },
+  { videoId: 'bottomVideo', rotation: '-90 0 0' },
+  { videoId: 'backVideo', rotation: '0 180 0' }
+];
+let currentStageIndex = 0;
+function nextStage(){
+  currentStageIndex = (currentStageIndex + 1) % stages.length;
+  const s = stages[currentStageIndex];
+  sky.setAttribute('src', `#${s.videoId}`);
+  player.setAttribute('rotation', s.rotation);
+}
 
-handle.addEventListener('click', () => {
-  hudOpen = !hudOpen;
-  strip.style.bottom = hudOpen ? '0' : '-82px';
-  playSound('clickSound', 0.85);
-});
-
+/* ====================
+   UI: slide HUD buttons
+   ==================== */
 document.getElementById('btn-withdraw').addEventListener('click', () => {
-  playSound('clickSound', 0.95);
+  playClick();
+  // Do NOT reset tetrusScore here. Withdraw flow should handle resetting.
+  // Open withdraw page for the user to complete withdrawal.
   window.open('https://tiffyai.github.io/Offline-', '_self');
 });
-
 document.getElementById('btn-vr').addEventListener('click', async () => {
-  playSound('clickSound', 0.95);
-  try { await scene.enterVR(); } catch(e){ console.log('VR not available', e); }
+  playClick();
+  try { await scene.enterVR(); } catch(e){ console.log('VR enter failed', e); }
 });
-
 document.getElementById('btn-ar').addEventListener('click', async () => {
-  playSound('clickSound', 0.95);
+  playClick();
   try {
-    /* Simple AR toggle attempt (will succeed on compatible devices/browsers) */
     if (!scene.hasAttribute('webxr')) scene.setAttribute('webxr', 'mode: ar');
-    await scene.enterVR(); // A-Frame uses enterVR for both VR/AR sessions depending on mode
-  } catch(e){ console.log('AR not available', e); }
+    await scene.enterVR();
+  } catch(e){ console.log('AR enter failed', e); }
 });
 
-/* ---------- Boot ---------- */
-window.addEventListener('load', () => {
-  // ensure videos & bg music start (muted policy safe)
-  ['rightVideo','topVideo','leftVideo','bottomVideo','backVideo','enemyVideo'].forEach(id=>{
-    const v = document.getElementById(id);
-    if (v) { v.muted = true; v.play().catch(()=>{}); }
-  });
-  const bg = document.getElementById('bgMusic');
-  if (bg) { bg.volume = 0.25; bg.loop = true; bg.play().catch(()=>{}); }
+/* ====================
+   Misc: online counter (mock)
+   ==================== */
+function updateOnlineMock() {
+  const el = document.getElementById('score'); // reuse score area for simplicity? we'll not show number here to avoid changing layout
+  // You can implement a real server counter later; for now no-op.
+}
+setInterval(updateOnlineMock, 5000);
 
-  lastTime = performance.now();
-  requestAnimationFrame(gameLoop);
-});
+/* ====================
+   Safe shutdown / debug helpers
+   ==================== */
+/* Developer helper: expose functions to console if you need quick checks */
+window.__BLOCKCHAIN_STORM = {
+  addScore,
+  clearProgressMemory,
+  getProgress: () => ({ progressScore, challengeStart }),
+  getTetrus: () => parseFloat(localStorage.getItem('tetrusScore') || '0')
+};
 </script>
 </body>
 </html>
