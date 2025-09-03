@@ -183,7 +183,7 @@ function renderBalance(){
 
 /* Updated logic for the challenge bar */
 function renderChallenge(){
-  // If the score is 0, reset the counter
+  // Check if the score has been withdrawn (local storage is 0) to reset the bar
   if (parseFloat(localStorage.getItem('tetrusScore')) === 0){
     cubesDestroyedInSession = 0;
   }
