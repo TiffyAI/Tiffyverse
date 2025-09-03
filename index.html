@@ -183,7 +183,12 @@ function renderBalance(){
 
 /* Updated logic for the challenge bar */
 function renderChallenge(){
-  // Progress is based on cubes destroyed this session, not local storage
+  // Check if the score has been withdrawn (local storage is 0) to reset the bar
+  if (localStorage.getItem('tetrusScore') === '0'){
+    cubesDestroyedInSession = 0;
+  }
+  
+  // Progress is based on cubes destroyed this session
   const cubesPerTiffy = 1 / 0.002;
   const cubesForGoal = PROGRESS_THRESHOLD_TIFFY * cubesPerTiffy;
   const progress = Math.min(cubesDestroyedInSession / cubesForGoal, 1);
@@ -193,12 +198,6 @@ function renderChallenge(){
   // This means they haven't withdrawn yet.
   if (progress >= 1 && score > 0){
     onThresholdReached();
-  }
-  
-  // If the score in local storage IS 0, reset the bar for the next challenge
-  if (score === 0){
-    cubesDestroyedInSession = 0;
-    challengeFill.style.width = '0%';
   }
 }
 
@@ -403,7 +402,7 @@ document.getElementById('btn-vr').addEventListener('click', async () => {
   try{ await scene.enterVR(); } catch(e){ console.log('VR not available',e); }
 });
 document.getElementById('btn-ar').addEventListener('click', async () => {
-  playSound('clickSound', 0.9);
+  playSound('click-sound', 0.9);
   try {
     if (!scene.hasAttribute('webxr')) scene.setAttribute('webxr','mode: ar');
     await scene.enterVR();
