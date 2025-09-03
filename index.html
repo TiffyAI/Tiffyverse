@@ -183,13 +183,11 @@ function renderBalance(){
 
 /* Updated logic for the challenge bar */
 function renderChallenge(){
-  // Check if the score has been withdrawn (local storage is 0) to reset the bar
   const cubesPerTiffy = 1 / 0.002;
   const cubesForGoal = PROGRESS_THRESHOLD_TIFFY * cubesPerTiffy;
   const progress = Math.min(cubesDestroyedInSession / cubesForGoal, 1);
   challengeFill.style.width = (progress * 100) + '%';
   
-  // If the bar is full and the user's score is NOT 0, show congrats.
   if (progress >= 1 && score > 0){
     onThresholdReached();
   }
@@ -211,10 +209,9 @@ function onThresholdReached(){
 /* Updated addScore is the single source of truth called when cubes are destroyed */
 function addScore(value){
   score += value;
-  // safe rounding digit-by-digit
   score = Math.round(score * 1e6) / 1e6;
   localStorage.setItem('tetrusScore', score.toString());
-  cubesDestroyedInSession++; // Track cubes destroyed for progress bar
+  cubesDestroyedInSession++;
   renderBalance();
   renderChallenge();
 }
@@ -387,7 +384,6 @@ hudHandle.addEventListener('click', () => {
 withdrawBtn.addEventListener('click', () => {
   playSound('clickSound', 0.95);
   // When the user clicks withdraw, we reset the local storage score to 0
-  localStorage.setItem('tetrusScore', '0');
   // Redirect to the withdraw page
   window.open('https://tiffyai.github.io/Offline-', '_self');
 });
