@@ -244,8 +244,8 @@ function triggerCongrats() {
   // Sound + popup text
   playClick();
   const now = new Date();
-  congratsText.innerHTML = `You reached ${THRESHOLD} TIFFY — Withdraw now & enter the 7-Day Challenge!<br>
-    First 10 players get 50 TIFFY. Winner gets 200 scarce TIFFY gems.`;
+  congratsText.innerHTML = `You reached ${THRESHOLD} TIFFY — Withdraw now & Enter the 3 Hour Challenge!<br>
+    First 10 Players to Withdraw get 50 TIFFY. Winner gets Everyone's progressively unclaimed scarce TIFFY gems on reset.`;
   congratsTime.textContent = '⏱ Threshold reached: ' + now.toLocaleString();
 
   congratsPopup.style.display = 'flex';
@@ -274,7 +274,7 @@ function triggerCongrats() {
 function checkProgressReset() {
   const ts = parseFloat(localStorage.getItem('tetrusScore') || '0');
   const now = Date.now();
-  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+  const resetWindowMs = 3 * 60 * 60 * 1000; // 3 hours
 
   // If player has withdrawn completely (ts == 0), clear progress
   if (ts === 0) {
@@ -283,7 +283,7 @@ function checkProgressReset() {
   }
 
   // If challenge started and expired
-  if (challengeStart && (now - challengeStart) > sevenDaysMs) {
+  if (challengeStart && (now - challengeStart) > resetWindowMs) {
     // Only reset if player's tetrusScore is not holding > KEEP_IF_SCORE_OVER
     if (ts <= KEEP_IF_SCORE_OVER) {
       clearProgressMemory();
