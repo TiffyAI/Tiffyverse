@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>TiffyAI AR Shooter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component@1.0.0/dist/aframe-particle-system-component.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+  html, body { margin:0; height:100%; overflow:hidden; background:#000; font-family:'Share Tech Mono', monospace; }
+
+  /* Bottom slide-up HUD */
+  #hud-strip {
+    position: fixed;
+    bottom: -82px;            /* hidden by default */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(20, 20, 30, 0.55);
+    border-radius: 16px 16px 0 0;
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    box-shadow: 0 0 12px rgba(0,240,255,0.5);
+    padding: 8px 12px;
+    width: 92%;
+    max-width: 520px;
+    transition: bottom 0.35s ease;
+    z-index: 10000;
+  }
+  #hud-handle {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56px;
+    height: 18px;
+    background: rgba(0,240,255,0.7);
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    z-index: 10001;
+    box-shadow: 0 0 8px rgba(0,240,255,0.9);
+  }
+  .hud-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 12px;
+    padding: 8px 12px;
+    color: #00f0ff;
+    font-size: 14px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    backdrop-filter: blur(6px);
+  }
+  .hud-btn:hover { background: rgba(0,240,255,0.15); transform: translateY(-1px) scale(1.03); border-color: rgba(0,240,255,0.45); }
+  .hud-btn:active { transform: scale(0.98); }
+
+  #balance {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #00f0ff;
+    font-size: 14px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.22);
+  }
+  #balance img {
+    height: 20px;
+    filter: drop-shadow(0 0 5px rgba(0,240,255,0.8));
+  }
+
+  /* Make sure pointer events don’t block A-Frame except on the HUD itself */
+  #hud-strip, #hud-handle { pointer-events: auto; }
+  canvas.a-canvas, a-scene { pointer-events: auto; }
+</style>
+</head>
+<body>
+
+<a-scene vr-mode-ui="enabled: true">
+  <a-assets>
+    <!-- 360 stage videos -->
+    <video id="rightVideo"  autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/right.mp4"></video>
+    <video id="topVideo"    autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/top.mp4"></video>
+    <video id="leftVideo"   autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/left.mp4"></video>
+    <video id="bottomVideo" autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/bottom.mp4"></video>
+    <video id="backVideo"   autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/main/assets/back.mp4"></video>
+    <video id="enemyVideo"  autoplay loop muted playsinline crossorigin="anonymous" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/enemies.mp4"></video>
+
+    <!-- Sounds -->
+    <audio id="shootSound"   src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/fire.wav"></audio>
+    <audio id="explodeSound" src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/blocks.wav"></audio>
+    <audio id="swoochSound"  src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/swooch.wav"></audio>
+    <audio id="bgMusic"      src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/playing.wav" crossorigin="anonymous"></audio>
+    <audio id="clickSound"   src="https://raw.githubusercontent.com/TiffyAI/Tiffyverse/refs/heads/main/assets/click.wav"></audio>
+  </a-assets>
+
+  <a-sky src="#rightVideo"></a-sky>
+
+  <a-entity id="player" camera look-controls wasd-controls position="0 1.6 0"></a-entity>
+
+  <!-- Cursor for clicking enemies with mouse -->
+  <a-entity id="cursor" cursor="fuse: false; rayOrigin: mouse"
+            position="0 0 -1"
+            geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+            material="color: #00ffff; shader: flat"
+            animation="property: scale; to: 1.1 1.1 1.1; dir: alternate; loop: true; dur: 400"
+            raycaster="objects: .enemy; far: 200"></a-entity>
+
+  <a-entity id="effects-parent"></a-entity>
+</a-scene>
+
+<!-- Minimal bottom UI -->
+<div id="hud-handle" title="Open controls"></div>
+<div id="hud-strip">
+  <div id="balance"><img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TIFFY">0.000000</div>
+  <div class="hud-btn" id="btn-ar">🌐 AR</div>
+  <div class="hud-btn" id="btn-vr">🕶️ VR</div>
+  <div class="hud-btn" id="btn-withdraw">💸 Withdraw</div>
+</div>
+
+<script>
+/* ---------- Visual shot movement component ---------- */
+AFRAME.registerComponent('visual-shot', {
+  schema: { direction: {type:'vec3'}, speed: {type:'number', default:150} },
+  tick: function(time, dt){
+    const move = this.data.direction.clone().multiplyScalar(this.data.speed * dt / 1000);
+    this.el.object3D.position.add(move);
+    const camPos = document.getElementById('player').object3D.position;
+    if (this.el.object3D.position.distanceTo(camPos) > 200) {
+      this.el.parentNode && this.el.parentNode.removeChild(this.el);
+    }
+  }
+});
+
+/* ---------- Globals ---------- */
+const scene   = document.querySelector('a-scene');
+const sky     = document.querySelector('a-sky');
+const player  = document.getElementById('player');
+const cursor  = document.getElementById('cursor');
+const effectsParent = document.getElementById('effects-parent');
+const balanceEl = document.getElementById('balance');
+
+let spawnTimer = 0;
+const spawnInterval = 1200;
+let lastTime = performance.now();
+let cubesDestroyed = 0;
+let currentStageIndex = 0;
+window.globalEnemies = [];
+
+/* Score (balance) */
+let score = parseFloat(localStorage.getItem('tetrusScore') || '0');
+function renderBalance(){
+  balanceEl.innerHTML = `<img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TIFFY">${score.toFixed(6)}`;
+}
+renderBalance();
+
+/* ---------- Helpers ---------- */
+function addScore(v){
+  score += v;
+  score = Math.round(score * 1e6) / 1e6;
+  localStorage.setItem('tetrusScore', score.toString());
+  renderBalance();
+}
+
+function playSound(id, vol=1){
+  const src = document.getElementById(id);
+  if(!src) return;
+  try {
+    const node = src.cloneNode();
+    node.volume = vol;
+    node.play().catch(()=>{});
+  } catch(e){}
+}
+
+/* ---------- Stage rotation / sky change ---------- */
+const stages = [
+  { videoId: 'rightVideo',  rotation: '0 -90 0' },
+  { videoId: 'topVideo',    rotation: '90 0 0' },
+  { videoId: 'leftVideo',   rotation: '0 90 0' },
+  { videoId: 'bottomVideo', rotation: '-90 0 0' },
+  { videoId: 'backVideo',   rotation: '0 180 0' }
+];
+function nextStage(){
+  currentStageIndex = (currentStageIndex + 1) % stages.length;
+  const s = stages[currentStageIndex];
+  sky.setAttribute('src', `#${s.videoId}`);
+  player.setAttribute('rotation', s.rotation);
+  console.log(`Stage changed to: ${s.videoId}`);
+}
+
+/* ---------- Enemy spawning ---------- */
+function spawnEnemy(){
+  const cube = document.createElement('a-box');
+  cube.setAttribute('material', 'src: #enemyVideo; repeat: 1 1; shader: standard; roughness: 0.8; metalness: 0.15');
+  cube.setAttribute('width', 3);
+  cube.setAttribute('height', 3);
+  cube.setAttribute('depth', 3);
+  cube.setAttribute('class', 'enemy');
+
+  const spawnDistance = 80;
+  const horizontalRange = 50;
+  const verticalRange = 30;
+
+  const randX = (Math.random() - 0.5) * 2 * horizontalRange;
+  const randY = (Math.random() - 0.5) * 2 * verticalRange;
+  const localPos = new THREE.Vector3(randX, randY, -spawnDistance);
+
+  const q = new THREE.Quaternion();
+  player.object3D.getWorldQuaternion(q);
+  const playerWorld = new THREE.Vector3();
+  player.object3D.getWorldPosition(playerWorld);
+
+  localPos.applyQuaternion(q);
+  const worldPos = playerWorld.clone().add(localPos);
+
+  cube.object3D.position.copy(worldPos);
+  scene.appendChild(cube);
+
+  const rotSpeed = (Math.random() - 0.5) * 0.05;
+  window.globalEnemies.push({ el: cube, speed: 0.15 + Math.random()*0.15, rotSpeed });
+  playSound('swoochSound', 0.45);
+}
+
+/* ---------- Explosion effect ---------- */
+function explodeAt(position){
+  const burst = document.createElement('a-entity');
+  burst.setAttribute('position', `${position.x} ${position.y} ${position.z}`);
+  burst.setAttribute('particle-system', {
+    preset:'snow', particleCount:400, color:'#ffdd99,#ffffff,#ff9933', size:0.07,
+    velocityValue:'1.2 1.6 1.2', spread:'1.5 1.5 1.5', duration:0.85, blending:2,
+  });
+  effectsParent.appendChild(burst);
+  setTimeout(()=>{ burst.parentNode && burst.parentNode.removeChild(burst); }, 1000);
+
+  const numPieces = 12 + Math.random()*8;
+  for (let i=0;i<numPieces;i++){
+    const piece = document.createElement('a-box');
+    piece.setAttribute('width','0.3'); piece.setAttribute('height','0.3'); piece.setAttribute('depth','0.3');
+    piece.setAttribute('material','color:#9a7f6c; metalness:0.1; roughness:0.8');
+    piece.object3D.position.copy(position);
+    effectsParent.appendChild(piece);
+
+    const randDir = new THREE.Vector3((Math.random()*2-1),(Math.random()*1.4),(Math.random()*2-1)).normalize();
+    const travel = 1.2 + Math.random()*1.8;
+    const rotSpeed = (Math.random()*2 - 1) * 0.25;
+    const duration = 600 + Math.random()*500;
+    const start = performance.now();
+
+    const animatePiece = (t)=>{
+      const dt = (t - start) / duration;
+      if (dt >= 1){
+        piece.parentNode && piece.parentNode.removeChild(piece);
+        return;
+      }
+      piece.object3D.position.copy(position).add(randDir.clone().multiplyScalar(travel * dt));
+      piece.object3D.rotation.x += rotSpeed;
+      piece.object3D.rotation.y += rotSpeed;
+      requestAnimationFrame(animatePiece);
+    };
+    requestAnimationFrame(animatePiece);
+  }
+  playSound('explodeSound', 0.9);
+}
+
+/* ---------- Shot visual ---------- */
+function createVisualShot(){
+  const start = player.object3D.getWorldPosition(new THREE.Vector3());
+  const forward = new THREE.Vector3(); player.object3D.getWorldDirection(forward);
+
+  const shot = document.createElement('a-entity');
+  shot.setAttribute('geometry', 'primitive: sphere; radius: 0.4');
+  shot.setAttribute('material', 'shader: standard; emissive:#00ffff; emissiveIntensity:2; metalness:0.05; roughness:0.2; transparent:true; opacity:0.6');
+  shot.setAttribute('visual-shot', 'direction', forward);
+  shot.object3D.position.copy(start);
+
+  const trail = document.createElement('a-entity');
+  trail.setAttribute('particle-system', {
+    preset:'dust', particleCount:200, color:'#00ffff,#88ffcc,#ffffff', size:0.15,
+    velocityValue:'0 0 0', spread:'0.22 0.22 0.22', duration:0.6, blending:2,
+  });
+  shot.appendChild(trail);
+  effectsParent.appendChild(shot);
+}
+
+/* ---------- Main game loop ---------- */
+function gameLoop(){
+  const now = performance.now();
+  const dt = now - lastTime;
+  lastTime = now;
+
+  spawnTimer += dt;
+  if (spawnTimer > spawnInterval){ spawnTimer = 0; spawnEnemy(); }
+
+  // Move enemies towards player and scale based on distance
+  for (let i = window.globalEnemies.length - 1; i >= 0; i--){
+    const e = window.globalEnemies[i];
+    e.el.object3D.rotation.x += e.rotSpeed * 0.8;
+    e.el.object3D.rotation.y += e.rotSpeed;
+
+    const dir = new THREE.Vector3().subVectors(player.object3D.position, e.el.object3D.position).normalize();
+    e.el.object3D.position.add(dir.multiplyScalar(e.speed));
+
+    const distance = e.el.object3D.position.distanceTo(player.object3D.position);
+    const maxDistance = 150;
+    const scaleFactor = 1.0 + (1 - (distance / maxDistance)) * 1.5;
+    e.el.object3D.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+    if (distance < 1.2){
+      explodeAt(e.el.object3D.position.clone());
+      e.el.parentNode && e.el.parentNode.removeChild(e.el);
+      window.globalEnemies.splice(i,1);
+    }
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+/* ---------- Shooting ---------- */
+cursor.addEventListener('click', (e) => {
+  playSound('shootSound', 0.9);
+  createVisualShot();
+
+  const inter = e.detail.intersection;
+  if (inter && inter.object && inter.object.el) {
+    const clickedEl = inter.object.el;
+
+    if (clickedEl.classList.contains('enemy')) {
+      const enemyPos = clickedEl.object3D.position;
+      explodeAt(enemyPos.clone());
+      clickedEl.parentNode && clickedEl.parentNode.removeChild(clickedEl);
+
+      const index = window.globalEnemies.findIndex(it => it.el === clickedEl);
+      if (index > -1) window.globalEnemies.splice(index, 1);
+
+      addScore(0.002);
+      cubesDestroyed++;
+      if (cubesDestroyed % 20 === 0) nextStage();
+    }
+  }
+});
+
+/* ---------- HUD: slide + buttons (click.wav) ---------- */
+let hudOpen = false;
+const handle = document.getElementById('hud-handle');
+const strip  = document.getElementById('hud-strip');
+
+handle.addEventListener('click', () => {
+  hudOpen = !hudOpen;
+  strip.style.bottom = hudOpen ? '0' : '-82px';
+  playSound('clickSound', 0.85);
+});
+
+document.getElementById('btn-withdraw').addEventListener('click', () => {
+  playSound('clickSound', 0.95);
+  window.open('https://tiffyai.github.io/Offline-', '_self');
+});
+
+document.getElementById('btn-vr').addEventListener('click', async () => {
+  playSound('clickSound', 0.95);
+  try { await scene.enterVR(); } catch(e){ console.log('VR not available', e); }
+});
+
+document.getElementById('btn-ar').addEventListener('click', async () => {
+  playSound('clickSound', 0.95);
+  try {
+    /* Simple AR toggle attempt (will succeed on compatible devices/browsers) */
+    if (!scene.hasAttribute('webxr')) scene.setAttribute('webxr', 'mode: ar');
+    await scene.enterVR(); // A-Frame uses enterVR for both VR/AR sessions depending on mode
+  } catch(e){ console.log('AR not available', e); }
+});
+
+/* ---------- Boot ---------- */
+window.addEventListener('load', () => {
+  // ensure videos & bg music start (muted policy safe)
+  ['rightVideo','topVideo','leftVideo','bottomVideo','backVideo','enemyVideo'].forEach(id=>{
+    const v = document.getElementById(id);
+    if (v) { v.muted = true; v.play().catch(()=>{}); }
+  });
+  const bg = document.getElementById('bgMusic');
+  if (bg) { bg.volume = 0.25; bg.loop = true; bg.play().catch(()=>{}); }
+
+  lastTime = performance.now();
+  requestAnimationFrame(gameLoop);
+});
+</script>
+</body>
+</html>
