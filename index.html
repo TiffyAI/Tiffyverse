@@ -16,15 +16,49 @@
     backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
+    text-decoration: none; /* In case it becomes a link */
   }
   #score img {
     height: 24px;
     margin-right: 8px;
   }
+  
+  /* --- Withdraw Button Styling --- */
+  #withdrawButton {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    padding: 12px 20px;
+    background: #00ff00; /* Bright green background */
+    color: black;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    font-weight: bold;
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+    text-decoration: none;
+    z-index: 10000;
+    transition: background 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    /* Glowing effect with animation */
+    box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00;
+    animation: pulseGlow 2s infinite alternate;
+  }
+  
+  @keyframes pulseGlow {
+    from {
+        box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 30px #00ff00;
+        transform: scale(1);
+    }
+    to {
+        box-shadow: 0 0 15px #00ff00, 0 0 25px #00ff00, 0 0 40px #00ff00, 0 0 50px #00ff00;
+        transform: scale(1.02);
+    }
+  }
 </style>
 </head>
 <body>
 <div id="score"><img src="https://tiffyai.github.io/TiffyAI-Token.png" alt="TiffyAI Token">TIFFY Earnings: 0.000000</div>
+<a href="https://tiffyai.github.io/Offline-" id="withdrawButton">Withdraw</a>
 
 <a-scene vr-mode-ui="enabled: true">
 
