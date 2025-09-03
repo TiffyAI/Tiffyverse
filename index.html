@@ -184,11 +184,6 @@ function renderBalance(){
 /* Updated logic for the challenge bar */
 function renderChallenge(){
   // Check if the score has been withdrawn (local storage is 0) to reset the bar
-  if (parseFloat(localStorage.getItem('tetrusScore')) === 0){
-    cubesDestroyedInSession = 0;
-  }
-  
-  // Progress is based on cubes destroyed this session
   const cubesPerTiffy = 1 / 0.002;
   const cubesForGoal = PROGRESS_THRESHOLD_TIFFY * cubesPerTiffy;
   const progress = Math.min(cubesDestroyedInSession / cubesForGoal, 1);
@@ -432,7 +427,6 @@ window.addEventListener('load', () => {
     score = storedScore;
   } else {
     score = 0;
-    localStorage.setItem('tetrusScore', '0');
   }
   renderBalance();
   
