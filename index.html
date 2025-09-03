@@ -183,7 +183,7 @@ function renderBalance(){
 
 /* Updated logic for the challenge bar */
 function renderChallenge(){
-  // Check if the score has been withdrawn (local storage is 0) to reset the bar
+  // If the score is 0, reset the counter
   if (parseFloat(localStorage.getItem('tetrusScore')) === 0){
     cubesDestroyedInSession = 0;
   }
@@ -194,8 +194,7 @@ function renderChallenge(){
   const progress = Math.min(cubesDestroyedInSession / cubesForGoal, 1);
   challengeFill.style.width = (progress * 100) + '%';
   
-  // If the bar is full and the user's score in local storage is NOT 0, show congrats.
-  // This means they haven't withdrawn yet.
+  // If the bar is full and the user's score is NOT 0, show congrats.
   if (progress >= 1 && score > 0){
     onThresholdReached();
   }
@@ -428,7 +427,13 @@ window.addEventListener('load', () => {
   if (bg){ bg.volume = 0.25; bg.loop = true; bg.play().catch(()=>{}); }
 
   // load score from storage & render
-  score = parseFloat(localStorage.getItem('tetrusScore') || '0');
+  const storedScore = parseFloat(localStorage.getItem('tetrusScore'));
+  if (!isNaN(storedScore) && storedScore > 0) {
+    score = storedScore;
+  } else {
+    score = 0;
+    localStorage.setItem('tetrusScore', '0');
+  }
   renderBalance();
   
   // Call renderChallenge to check the initial state of the progress bar
