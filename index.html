@@ -428,7 +428,7 @@ window.addEventListener('load', () => {
 
   // load score from storage & render
   const storedScore = parseFloat(localStorage.getItem('tetrusScore'));
-  if (!isNaN(storedScore) && storedScore > 0) {
+  if (!isNaN(storedScore)) {
     score = storedScore;
   } else {
     score = 0;
