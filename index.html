@@ -159,7 +159,7 @@ const withdrawBtn = document.getElementById('btn-withdraw');
 let hudOpen = false;
 
 // The game's progress bar is now separate from the total score
-const PROGRESS_THRESHOLD_TIFFY = 50; // The threshold to fill the bar
+const PROGRESS_THRESHOLD_TIFFY = 50;
 let cubesDestroyedInSession = 0;
 
 /* Score synchronized to tetrusScore */
@@ -184,7 +184,7 @@ function renderBalance(){
 /* Updated logic for the challenge bar */
 function renderChallenge(){
   // Check if the score has been withdrawn (local storage is 0) to reset the bar
-  if (localStorage.getItem('tetrusScore') === '0'){
+  if (parseFloat(localStorage.getItem('tetrusScore')) === 0){
     cubesDestroyedInSession = 0;
   }
   
